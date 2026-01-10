@@ -1,0 +1,95 @@
+.container {
+    width: 100%;
+}
+
+.sectionTitle {
+    font-size: 1.25rem;
+    color: var(--md-sys-color-on-surface);
+    margin-bottom: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+    font-weight: 600;
+}
+
+.sectionTitle:first-child {
+    margin-top: 0;
+}
+
+.daysGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-lg);
+}
+
+.dayButton {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 12px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    color: var(--md-sys-color-on-surface-variant);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: var(--font-family-base);
+}
+
+.dayButton:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.selectedDay {
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    border-color: var(--md-sys-color-primary);
+    box-shadow: 0 0 15px rgba(208, 188, 255, 0.2);
+}
+
+.dateNumber {
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.timesGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+}
+
+.timeButton {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 100px;
+    padding: 10px;
+    color: var(--md-sys-color-on-surface);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: var(--font-family-base);
+    font-weight: 500;
+}
+
+.timeButton:hover {
+    border-color: var(--md-sys-color-primary);
+}
+
+.selectedTime {
+    background: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+    border-color: var(--md-sys-color-primary);
+    transform: scale(1.05);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.actionArea {
+    display: flex;
+    justify-content: center;
+}
+
+.disabledButton {
+    opacity: 0.5;
+    cursor: not-allowed;
+    filter: grayscale(1);
+}
