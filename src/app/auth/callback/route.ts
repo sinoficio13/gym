@@ -37,12 +37,18 @@ export async function GET(request: Request) {
                 if (profile?.role === 'admin') {
                     return NextResponse.redirect(`${originUrl}/admin/dashboard`)
                 } else {
-                    return NextResponse.redirect(`${originUrl}/booking`) // Default for complete users
+                    return NextResponse.redirect(`${originUrl}/dashboard/client`) // Default for complete users
                 }
             }
         }
     }
 
     // return the user to an error page with instructions
-    return NextResponse.redirect(`${origin}/auth/auth-code-error`)
+    // Forward existing error params if any
+    const errorParams = new URLSearchParams();
+    if (searchParams.get('error')) errorParams.set('error', searchParams.get('error')!);
+    if (searchParams.get('error_code')) errorParams.set('error_code', searchParams.get('error_code')!);
+    if (searchParams.get('error_description')) errorParams.set('error_description', searchParams.get('error_description')!);
+
+    return NextResponse.redirect(`${origin}/auth/auth-code-error?${errorParams.toString()}`)
 }

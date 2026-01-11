@@ -1,8 +1,20 @@
 import type { Metadata } from "next";
-import { Outfit } from "next/font/google";
+import { Outfit, Inter } from "next/font/google";
 import "./globals.css";
 
-const outfit = Outfit({ subsets: ["latin"], weight: ['400', '600', '700'] });
+const outfit = Outfit({
+  subsets: ["latin"],
+  weight: ['400', '500', '600', '700', '800'],
+  variable: '--font-outfit',
+  display: 'swap',
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ['300', '400', '500', '600'],
+  variable: '--font-inter',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: "Gym Instructor Premium",
@@ -15,8 +27,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es">
-      <body className={outfit.className}>
+    <html lang="es" className={`${outfit.variable} ${inter.variable}`}>
+      <body suppressHydrationWarning={true}>
         <main className="min-h-screen flex flex-col items-center justify-center p-4">
           {children}
         </main>

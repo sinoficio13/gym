@@ -99,6 +99,9 @@
     color: white;
     font-size: 1rem;
     transition: all 0.3s ease;
+    width: 100%;
+    box-sizing: border-box;
+    /* Critical fix for overflow */
 }
 
 .input:focus {

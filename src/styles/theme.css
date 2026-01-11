@@ -1,28 +1,31 @@
 :root {
   /* Color Palette - Premium Violet & Dark Scheme */
-  --md-sys-color-primary: #D0BCFF; /* Light violet for dark mode */
+  --md-sys-color-primary: #D0BCFF;
+  /* Light violet for dark mode */
   --md-sys-color-on-primary: #381E72;
   --md-sys-color-primary-container: #4F378B;
   --md-sys-color-on-primary-container: #EADDFF;
-  
+
   --md-sys-color-secondary: #CCC2DC;
   --md-sys-color-on-secondary: #332D41;
   --md-sys-color-secondary-container: #4A4458;
   --md-sys-color-on-secondary-container: #E8DEF8;
 
-  --md-sys-color-tertiary: #EFB8C8; /* Pinkish accent */
+  --md-sys-color-tertiary: #EFB8C8;
+  /* Pinkish accent */
   --md-sys-color-on-tertiary: #492532;
   --md-sys-color-tertiary-container: #633B48;
   --md-sys-color-on-tertiary-container: #FFD8E4;
 
-  --md-sys-color-background: #121212; /* Deep dark */
+  --md-sys-color-background: #121212;
+  /* Deep dark */
   --md-sys-color-on-background: #E6E1E5;
-  
+
   --md-sys-color-surface: #1E1E1E;
   --md-sys-color-on-surface: #E6E1E5;
   --md-sys-color-surface-variant: #49454F;
   --md-sys-color-on-surface-variant: #CAC4D0;
-  
+
   /* Custom Premium Gradients */
   --premium-gradient-primary: linear-gradient(135deg, #6750A4 0%, #D0BCFF 100%);
   --premium-gradient-surface: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
@@ -36,9 +39,25 @@
   --spacing-xl: 32px;
   --spacing-xxl: 48px;
 
-  /* Typography */
-  --font-family-base: 'Outfit', sans-serif;
-  --font-size-display: 3.5rem;
-  --font-size-heading: 2rem;
+  /* Typography System */
+  --font-family-heading: var(--font-outfit), sans-serif;
+  --font-family-body: var(--font-inter), sans-serif;
+
+  /* Scale */
+  --font-size-display: clamp(2.5rem, 5vw, 4rem);
+  --font-size-heading: clamp(1.5rem, 3vw, 2.5rem);
+  --font-size-subheading: 1.25rem;
   --font-size-body: 1rem;
+  --font-size-small: 0.875rem;
+
+  /* Weights */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+  --font-weight-black: 800;
+
+  /* Line Heights (Better Readability) */
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.6;
+  --line-height-relaxed: 1.8;
 }

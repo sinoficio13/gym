@@ -34,11 +34,14 @@ export const TimeSlotPicker = () => {
     }, []);
 
     // Fetch unavailable slots when date changes
+    // Fetch slot availability
     useEffect(() => {
         if (!selectedDate) return;
 
         async function fetchSlots() {
             setLoadingSlots(true);
+            const { data: { user } } = await supabase.auth.getUser();
+
             // Start of day
             const startOfDay = new Date(selectedDate!);
             startOfDay.setHours(0, 0, 0, 0);
@@ -49,20 +52,36 @@ export const TimeSlotPicker = () => {
 
             const { data, error } = await supabase
                 .from('appointments')
-                .select('start_time')
+                .select('start_time, client_id')
                 .gte('start_time', startOfDay.toISOString())
                 .lte('start_time', endOfDay.toISOString())
                 .neq('status', 'cancelled');
 
             if (data) {
-                // Extract blocked hours "HH:MM"
-                const blocked = data.map(apt => {
+                // Count bookings per slot
+                const slotCounts: Record<string, number> = {};
+                const userBookedSlots: string[] = [];
+
+                data.forEach(apt => {
                     const date = new Date(apt.start_time);
-                    // Adjust to local time string simpler
-                    const hours = date.getHours().toString().padStart(2, '0');
-                    const minutes = date.getMinutes().toString().padStart(2, '0');
-                    return `${hours}:${minutes}`;
+                    const timeKey = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+
+                    slotCounts[timeKey] = (slotCounts[timeKey] || 0) + 1;
+
+                    if (user && apt.client_id === user.id) {
+                        userBookedSlots.push(timeKey);
+                    }
                 });
+
+                // Determine effectively "unavailable" slots
+                // Rule 1: Slot has 3 or more bookings (FULL)
+                // Rule 2: User already has a booking in this slot (ALREADY BOOKED)
+                const blocked = HOURS.filter(h => {
+                    const isFull = (slotCounts[h] || 0) >= 3;
+                    const isAlreadyBooked = userBookedSlots.includes(h);
+                    return isFull || isAlreadyBooked;
+                });
+
                 setUnavailableSlots(blocked);
             }
             setLoadingSlots(false);
@@ -86,7 +105,7 @@ export const TimeSlotPicker = () => {
         const { data: profile } = await supabase.from('profiles').select('id, full_name').eq('id', user.id).single();
         if (!profile || !profile.full_name) {
             alert("Por favor completa tu perfil antes de reservar.");
-            router.push('/profile');
+            router.push('/dashboard/client/profile'); // Nuevo link al portal
             return;
         }
 
@@ -105,7 +124,7 @@ export const TimeSlotPicker = () => {
                 client_id: user.id,
                 start_time: startDate.toISOString(),
                 end_time: endDate.toISOString(),
-                status: 'confirmed' // Auto confirm for now
+                status: 'confirmed'
             });
 
         setBooking(false);
@@ -114,10 +133,8 @@ export const TimeSlotPicker = () => {
             alert('Error al reservar: ' + error.message);
         } else {
             alert('¡Reserva Exitosa!');
-            // Refresh slots
             setSelectedTime(null);
-            // Force reload slots logic? simpler to just reload page or reset state
-            window.location.reload();
+            window.location.href = '/dashboard/client'; // Volver al home tras reservar
         }
     };
 
@@ -161,7 +178,10 @@ export const TimeSlotPicker = () => {
                             onClick={() => !disabled && setSelectedTime(time)}
                         >
                             {time}
-                            {disabled && <span style={{ display: 'block', fontSize: '0.6rem', color: '#ff6b6b' }}>Ocupado</span>}
+                            {/* Improve feedback message */}
+                            {disabled && <span style={{ display: 'block', fontSize: '0.6rem', color: '#ff6b6b' }}>
+                                Ocupado / Reservado
+                            </span>}
                         </button>
                     )
                 })}

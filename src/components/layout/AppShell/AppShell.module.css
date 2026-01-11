@@ -1,0 +1,150 @@
+/* 
+  App Shell Layout 
+  Uses CSS Grid to define the main structural regions.
+  Mobile-First approach.
+*/
+
+.shell {
+    display: grid;
+    min-height: 100vh;
+    width: 100%;
+    /* Mobile Layout: 1 column, content takes remaining space */
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto;
+    /* Content | Bottom Nav */
+    grid-template-areas:
+        "main"
+        "nav";
+    background: radial-gradient(circle at 10% 20%, rgb(20, 0, 30) 0%, rgb(0, 0, 0) 90%);
+}
+
+/* Region: Sidebar (Hidden on Mobile by default) */
+.sidebar {
+    display: none;
+    /* Hidden on mobile */
+    grid-area: sidebar;
+    background: rgba(10, 10, 15, 0.6);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 24px;
+    flex-direction: column;
+    gap: 32px;
+}
+
+/* Region: Main Content */
+.main {
+    grid-area: main;
+    padding: 20px;
+    padding-bottom: 100px;
+    /* Space for bottom nav on mobile */
+    overflow-y: auto;
+    position: relative;
+    max-width: 100vw;
+}
+
+/* Region: Bottom Navigation (Mobile Only) */
+.bottomNav {
+    grid-area: nav;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 400px;
+    height: 70px;
+    background: rgba(30, 30, 40, 0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 100;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+}
+
+/* 
+  DESKTOP OVERRIDES 
+  Switch to 2-column Grid
+*/
+@media (min-width: 1024px) {
+    .shell {
+        grid-template-columns: 280px 1fr;
+        /* Sidebar Fixed | Content Fluid */
+        grid-template-rows: 1fr;
+        grid-template-areas:
+            "sidebar main";
+    }
+
+    .sidebar {
+        display: flex;
+        /* Show sidebar */
+        position: sticky;
+        top: 0;
+        height: 100vh;
+    }
+
+    .bottomNav {
+        display: none;
+        /* Hide bottom nav */
+    }
+
+    .main {
+        padding: 40px;
+        /* More breathing room */
+        padding-bottom: 40px;
+        max-width: 1600px;
+        /* Cap width for ultra-wide screens */
+        margin: 0 auto;
+        width: 100%;
+    }
+}
+
+/* Shared Navigation Styles */
+.navLink {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--md-sys-color-on-surface-variant);
+    text-decoration: none;
+    font-weight: 500;
+    padding: 12px 16px;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.navLink:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+}
+
+.navLinkActive {
+    background: rgba(208, 188, 255, 0.15);
+    color: #d0bcff;
+    font-weight: 600;
+}
+
+/* Mobile specific nav link adjustments */
+.mobileNavLink {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.6);
+    transition: all 0.2s;
+}
+
+.mobileNavLinkActive {
+    color: #d0bcff;
+    transform: translateY(-2px);
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: 800;
+    background: linear-gradient(45deg, #d0bcff, #ffffff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 10px;
+}

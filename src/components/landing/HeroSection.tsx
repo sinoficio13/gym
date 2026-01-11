@@ -40,12 +40,12 @@ export const HeroSection = () => {
 
                 <RevealWrapper delay={0.8}>
                     <div className={styles.buttonGroup}>
-                        <PrimaryButton
-                            onClick={() => router.push('/booking')}
-                            style={{ padding: '16px 32px', fontSize: '1.1rem' }}
-                        >
-                            Comienza Tu Transformación
-                        </PrimaryButton>
+                        <Link href="/dashboard/client">
+                            {/* @ts-ignore */}
+                            <PrimaryButton style={{ padding: '16px 32px', fontSize: '1.1rem' }}>
+                                Empezar Ahora
+                            </PrimaryButton>
+                        </Link>
 
                         <button
                             onClick={() => document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' })}
@@ -66,6 +66,6 @@ export const HeroSection = () => {
                     </div>
                 </RevealWrapper>
             </div>
-        </section >
+        </section>
     );
 };

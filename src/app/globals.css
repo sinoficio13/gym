@@ -9,12 +9,43 @@
 body {
   background-color: var(--md-sys-color-background);
   color: var(--md-sys-color-on-background);
-  font-family: var(--font-family-base);
+  font-family: var(--font-family-body);
+  /* Inter for body text */
   margin: 0;
   padding: 0;
   min-height: 100vh;
   /* Subtle dark radial gradient for depth */
-  background: radial-gradient(circle at 50% 0%, #2a2a2a 0%, #121212 70%);
+  background: radial-gradient(circle at 50% 0%, #1a1a2e 0%, #0d0d12 100%);
+
+  /* Typography Enhancements */
+  line-height: var(--line-height-normal);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  /* Inter features */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-family-heading);
+  /* Outfit for headings */
+  line-height: var(--line-height-tight);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--spacing-sm);
+  letter-spacing: -0.02em;
+  /* Tighter spacing for headings */
+}
+
+p {
+  margin-bottom: var(--spacing-md);
+  max-width: 70ch;
+  /* Readable line length */
+  color: var(--md-sys-color-on-surface-variant);
+  /* Softer contrast for body text */
 }
 
 a {
