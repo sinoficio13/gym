@@ -81,7 +81,7 @@ export const CalendarView = () => {
         //     .lte('start_time', end.toISOString());
 
         // if (data) setAppointments(data);
-        // setAppointments(MOCK_APPOINTMENTS); // Force Mock Data
+        setAppointments(MOCK_APPOINTMENTS); // Force Mock Data
         setLoading(false);
     };
 
