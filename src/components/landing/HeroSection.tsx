@@ -4,10 +4,21 @@ import { PrimaryButton } from "@/components/ui/PrimaryButton";
 import styles from './HeroSection.module.css';
 import Link from "next/link";
 import { RevealWrapper } from "../ui/RevealWrapper";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 
 export const HeroSection = () => {
     const router = useRouter();
+    const searchParams = useSearchParams();
+
+    // AUTO-FIX: If Supabase redirects to home with ?code=..., forward to callback
+    useEffect(() => {
+        const code = searchParams.get("code");
+        if (code) {
+            console.log("Detectado código OAuth en landing. Redirigiendo a callback...");
+            router.push(`/auth/callback?code=${code}`);
+        }
+    }, [searchParams, router]);
 
     return (
         <section className={styles.heroContainer}>
