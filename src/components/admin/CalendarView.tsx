@@ -71,16 +71,17 @@ export const CalendarView = () => {
 
     const loadAppointments = async () => {
         setLoading(true);
-        const { start, end } = getWeekRange(currentDate);
+        // const { start, end } = getWeekRange(currentDate);
 
         // Fetch appointments with Profile data
-        const { data, error } = await supabase
-            .from('appointments')
-            .select('*, profiles(full_name)')
-            .gte('start_time', start.toISOString())
-            .lte('start_time', end.toISOString());
+        // const { data, error } = await supabase
+        //     .from('appointments')
+        //     .select('*, profiles(full_name)')
+        //     .gte('start_time', start.toISOString())
+        //     .lte('start_time', end.toISOString());
 
-        if (data) setAppointments(data);
+        // if (data) setAppointments(data);
+        // setAppointments(MOCK_APPOINTMENTS); // Force Mock Data
         setLoading(false);
     };
 
