@@ -1,0 +1,121 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 600px;
+    /* Fixed height for scroll */
+    background: rgba(30, 30, 30, 0.4);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.navButton {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--md-sys-color-on-surface);
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.navButton:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 60px repeat(7, 1fr);
+    /* Time col + 7 days */
+    overflow-y: auto;
+    flex: 1;
+}
+
+.timeColumn {
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.timeLabel {
+    height: 60px;
+    /* 1 hour height */
+    display: flex;
+    align-items: start;
+    justify-content: center;
+    font-size: 0.75rem;
+    color: var(--md-sys-color-on-surface-variant);
+    padding-top: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+.dayColumn {
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    min-width: 100px;
+    position: relative;
+}
+
+.dayHeader {
+    text-align: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.02);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.currentDayHeader {
+    background: rgba(103, 80, 164, 0.2);
+    color: var(--md-sys-color-primary);
+}
+
+.appointment {
+    position: absolute;
+    left: 2px;
+    right: 2px;
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    border-left: 3px solid var(--md-sys-color-primary);
+    border-radius: 4px;
+    padding: 4px 6px;
+    font-size: 0.75rem;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.1s;
+    z-index: 1;
+}
+
+.appointment:hover {
+    transform: scale(1.02);
+    z-index: 5;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Status colors variant */
+.status_confirmed {
+    background: rgba(75, 181, 67, 0.2);
+    border-left-color: #4bb543;
+    color: #e8f5e9;
+}
+
+.status_pending {
+    background: rgba(255, 193, 7, 0.2);
+    border-left-color: #ffc107;
+    color: #fff8e1;
+}
+
+.hourCell {
+    height: 60px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    /* Guide lines */
+}
