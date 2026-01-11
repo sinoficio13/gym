@@ -8,6 +8,21 @@
     border-radius: 16px;
     border: 1px solid rgba(255, 255, 255, 0.05);
     overflow: hidden;
+    position: relative;
+}
+
+@media (max-width: 768px) {
+    .container {
+        height: calc(100vh - 100px);
+        /* Maximize height on mobile */
+        overflow-x: auto;
+        display: block;
+        /* Break flex layout to allow scroll */
+    }
+
+    .grid {
+        min-width: 600px;
+    }
 }
 
 .header {
@@ -17,6 +32,25 @@
     padding: 16px 24px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     background: rgba(255, 255, 255, 0.02);
+}
+
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .grid {
+        /* Force horizontal scroll on mobile */
+        min-width: 800px;
+        /* Ensure grid is wide enough */
+        overflow-x: auto;
+    }
+
+    .container {
+        overflow-x: auto;
+        /* Allow container to scroll */
+    }
 }
 
 .navButton {

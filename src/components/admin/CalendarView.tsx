@@ -6,11 +6,55 @@ import { createClient } from '@/lib/supabase/client';
 
 const HOURS = Array.from({ length: 16 }, (_, i) => i + 6); // 06:00 to 21:00
 
+// Mock Data for Demo
+const MOCK_APPOINTMENTS = [
+    {
+        id: '1',
+        profiles: { full_name: 'Ana García' },
+        start_time: new Date(new Date().setDate(new Date().getDate() - new Date().getDay() + 1)).toISOString().split('T')[0] + 'T07:00:00.000Z', // Monday 07:00
+        end_time: new Date(new Date().setDate(new Date().getDate() - new Date().getDay() + 1)).toISOString().split('T')[0] + 'T08:00:00.000Z', // Monday 08:00
+        status: 'confirmed',
+        type: 'Fuerza'
+    },
+    {
+        id: '2',
+        profiles: { full_name: 'Carlos Ruiz' },
+        start_time: new Date(new Date().setDate(new Date().getDate() - new Date().getDay() + 1)).toISOString().split('T')[0] + 'T18:00:00.000Z', // Monday 18:00
+        end_time: new Date(new Date().setDate(new Date().getDate() - new Date().getDay() + 1)).toISOString().split('T')[0] + 'T19:00:00.000Z', // Monday 19:00
+        status: 'pending',
+        type: 'Hipertrofia'
+    },
+    {
+        id: '3',
+        profiles: { full_name: 'María Rodriguez' },
+        start_time: new Date(new Date().setDate(new Date().getDate() - new Date().getDay() + 3)).toISOString().split('T')[0] + 'T09:00:00.000Z', // Wednesday 09:00
+        end_time: new Date(new Date().setDate(new Date().getDate() - new Date().getDay() + 3)).toISOString().split('T')[0] + 'T10:00:00.000Z', // Wednesday 10:00
+        status: 'confirmed',
+        type: 'Pérdida de Peso'
+    },
+    {
+        id: '4',
+        profiles: { full_name: 'Juan Perez' },
+        start_time: new Date(new Date().setDate(new Date().getDate() - new Date().getDay() + 4)).toISOString().split('T')[0] + 'T19:00:00.000Z', // Thursday 19:00
+        end_time: new Date(new Date().setDate(new Date().getDate() - new Date().getDay() + 4)).toISOString().split('T')[0] + 'T20:00:00.000Z', // Thursday 20:00
+        status: 'confirmed',
+        type: 'Funcional'
+    },
+    {
+        id: '5',
+        profiles: { full_name: 'Sofia Lopez' },
+        start_time: new Date(new Date().setDate(new Date().getDate() - new Date().getDay() + 5)).toISOString().split('T')[0] + 'T08:00:00.000Z', // Friday 08:00
+        end_time: new Date(new Date().setDate(new Date().getDate() - new Date().getDay() + 5)).toISOString().split('T')[0] + 'T09:00:00.000Z', // Friday 09:00
+        status: 'pending',
+        type: 'Estiramiento'
+    }
+];
+
 export const CalendarView = () => {
-    const supabase = createClient();
+    // const supabase = createClient(); // Commented out for mock data
     const [currentDate, setCurrentDate] = useState(new Date());
-    const [appointments, setAppointments] = useState<any[]>([]);
-    const [loading, setLoading] = useState(false);
+    const [appointments, setAppointments] = useState<any[]>(MOCK_APPOINTMENTS);
+    const [loading, setLoading] = useState(false); // Disable loading for mock
 
     // Get Start/End of current week
     const getWeekRange = (date: Date) => {
