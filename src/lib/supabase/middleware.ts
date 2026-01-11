@@ -29,15 +29,20 @@ export async function updateSession(request: NextRequest) {
         }
     )
 
-    // IMPORTANTE: NO protegeremos rutas todavía para no bloquearnos en desarrollo local
-    // hasta que tengamos claves reales.
-
+    // 1. Get User
     const {
         data: { user },
     } = await supabase.auth.getUser()
 
-    if (request.nextUrl.pathname.startsWith('/admin') && !user) {
+    // 2. PROTECTED ROUTES: Admin and Dashboard
+    // If accessing /admin or /dashboard without a user, Force Login.
+    if ((request.nextUrl.pathname.startsWith('/admin') || request.nextUrl.pathname.startsWith('/dashboard')) && !user) {
         return NextResponse.redirect(new URL('/login', request.url))
+    }
+
+    // 3. AUTH ROUTES: If already logged in, redirect away from /login
+    if (request.nextUrl.pathname === '/login' && user) {
+        return NextResponse.redirect(new URL('/dashboard/client', request.url))
     }
 
     return supabaseResponse
