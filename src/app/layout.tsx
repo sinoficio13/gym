@@ -19,21 +19,21 @@ const inter = Inter({
 export const metadata: Metadata = {
   metadataBase: new URL('https://gym-instructor-premium.vercel.app'),
   title: {
-    default: "Gym Instructor Premium",
-    template: "%s | Gym Instructor"
+    default: "Eucaris Pereira | Entrenadora Personal",
+    template: "%s | Eucaris Pereira"
   },
-  description: "Agenda tu cita de entrenamiento personal y transforma tu cuerpo. Gestión profesional de citas y rutinas.",
+  description: "Agenda tu cita de entrenamiento con Eucaris Pereira. Planes personalizados de fitness y transformación corporal.",
   openGraph: {
-    title: "Gym Instructor Premium",
-    description: "Agenda tu cita de entrenamiento personal y transforma tu cuerpo.",
+    title: "Eucaris Pereira | Entrenadora Personal",
+    description: "Agenda tu cita de entrenamiento y transforma tu cuerpo con planes personalizados.",
     url: '/',
-    siteName: 'Gym Instructor',
+    siteName: 'Eucaris Pereira',
     locale: 'es_ES',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: "Gym Instructor Premium",
+    title: "Eucaris Pereira | Entrenadora Personal",
     description: "Agenda tu cita de entrenamiento personal.",
   },
 };
