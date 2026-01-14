@@ -95,24 +95,20 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
             .lte('start_time', end.toISOString())
             .order('start_time', { ascending: true }); // Important for Agenda
 
+        import { toast } from 'sonner';
+
+        // ... (existing imports)
+
+        // ... inside loadAppointments ...
         if (data) {
             setAppointments(data);
-            if (onStatsUpdate) {
-                const now = new Date();
-                const todayStr = now.toDateString();
-                const todayCount = data.filter(a => new Date(a.start_time).toDateString() === todayStr).length;
-                const visibleCount = data.length;
-                const uniqueClients = new Set(data.map(a => a.user_id || a.profiles?.email)).size;
-
-                onStatsUpdate({
-                    today: todayCount,
-                    week: visibleCount,
-                    clients: uniqueClients
-                });
-            }
+            // ... (stats update logic)
         } else {
             setAppointments([]);
-            if (error) console.error('Error fetching appointments:', error);
+            if (error) {
+                console.error('Error fetching appointments:', error);
+                toast.error('Error cargando citas. Intenta recargar.');
+            }
             if (onStatsUpdate) onStatsUpdate({ today: 0, week: 0, clients: 0 });
         }
         setLoading(false);
@@ -183,6 +179,15 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
                         }
                     </div>
                     <button onClick={() => navigate(1)} className={styles.navButton}>&rarr;</button>
+
+                    <button
+                        onClick={() => loadAppointments()}
+                        className={styles.navButton}
+                        title="Recargar Citas"
+                        style={{ marginLeft: '8px', fontSize: '1rem' }}
+                    >
+                        🔄
+                    </button>
                 </div>
 
                 <div style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,0.1)', padding: '4px', borderRadius: '8px', marginTop: '10px' }}>
