@@ -17,7 +17,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://gym-instructor-premium.vercel.app'),
+  metadataBase: new URL('https://gym-beta-pink.vercel.app'),
   title: {
     default: "Eucaris Pereira | Entrenadora Personal",
     template: "%s | Eucaris Pereira"
