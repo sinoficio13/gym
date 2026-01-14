@@ -118,15 +118,22 @@ export const AppointmentModal = ({ appointment, onClose, onUpdate }: Appointment
         <div style={{
             position: 'fixed',
             top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0,0,0,0.85)', // Darker background
+            background: 'rgba(0,0,0,0.85)',
             backdropFilter: 'blur(8px)',
             display: 'flex',
-            alignItems: 'center',
+            alignItems: 'center', // Center vertically on desktop
             justifyContent: 'center',
             zIndex: 1000,
-            padding: '20px'
+            padding: '16px',
+            overflowY: 'auto' // Allow scrolling for the whole overlay if content is tall
         }} onClick={onClose}>
-            <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: '500px' }}>
+            <div onClick={e => e.stopPropagation()} style={{
+                width: '100%',
+                maxWidth: '500px',
+                // Mobile improvements:
+                margin: 'auto', // Centering trick for flex + scroll
+                maxHeight: '100%' // Prevent sticking out
+            }}>
                 <GlassCard style={{ background: 'var(--premium-gradient-surface)', border: '1px solid rgba(255,255,255,0.1)' }}>
                     {/* Header */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
