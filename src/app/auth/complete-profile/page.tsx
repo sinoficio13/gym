@@ -109,7 +109,7 @@ export default function CompleteProfilePage() {
         if (error) {
             alert('Error: ' + error.message);
         } else {
-            router.push('/booking');
+            router.push('/dashboard/client/booking');
         }
         setLoading(false);
     };
