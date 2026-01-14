@@ -24,9 +24,10 @@ export async function GET(request: Request) {
                     .eq('id', user.id)
                     .single()
 
-                const forwardedHost = request.headers.get('x-forwarded-host')
-                const isLocalEnv = process.env.NODE_ENV === 'development'
-                const originUrl = isLocalEnv ? origin : `https://${forwardedHost}`
+                const isLocalEnv = process.env.NODE_ENV === 'development';
+                // In local dev, origin is usually http://localhost:3000. In prod, use request.url origin or trusted header
+                // Simplifying to use the request origin which Next.js usually handles correctly
+                const originUrl = origin;
 
                 // 1. Check if Profile is Incomplete (New Logic)
                 if (!profile?.cedula || !profile?.phone) {
