@@ -6,7 +6,6 @@ import styles from './TimeSlotPicker.module.css';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-
 import { formatTime12h } from '@/lib/utils';
 
 const DAYS_MAP = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -17,12 +16,24 @@ export const TimeSlotPicker = () => {
 
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
-    const [availableSlots, setAvailableSlots] = useState<string[]>([]); // Dynamic slots from DB
+    const [availableSlots, setAvailableSlots] = useState<string[]>([]);
     const [unavailableSlots, setUnavailableSlots] = useState<string[]>([]);
     const [loadingSlots, setLoadingSlots] = useState(false);
     const [booking, setBooking] = useState(false);
 
-    // ... (useEffect for weekDays remains same)
+    // Generate next 7 days
+    const [weekDays, setWeekDays] = useState<Date[]>([]);
+
+    useEffect(() => {
+        const days = [];
+        for (let i = 0; i < 7; i++) {
+            const d = new Date();
+            d.setDate(d.getDate() + i);
+            days.push(d);
+        }
+        setWeekDays(days);
+        setSelectedDate(days[0]); // Select today by default
+    }, []);
 
     // Fetch unavailable slots when date changes
     useEffect(() => {
@@ -49,10 +60,10 @@ export const TimeSlotPicker = () => {
                 .eq('is_active', true)
                 .order('start_time');
 
-            // Fallback default hours if DB is empty (optional, better to force config)
+            // Fallback default hours if DB is empty
             const baseSlots = scheduleData && scheduleData.length > 0
                 ? scheduleData.map(s => s.start_time.slice(0, 5)) // Ensure HH:MM format
-                : []; // Empty implies closed
+                : [];
 
             setAvailableSlots(baseSlots);
 
@@ -113,13 +124,60 @@ export const TimeSlotPicker = () => {
         fetchSlots();
     }, [selectedDate, supabase]);
 
-    // ... (handleConfirm remains same)
+    const handleConfirm = async () => {
+        if (!selectedDate || !selectedTime) return;
+        setBooking(true);
 
-    // ...
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            toast.error("Debes iniciar sesión para reservar.");
+            router.push('/login');
+            return;
+        }
+
+        // Check profile
+        const { data: profile } = await supabase.from('profiles').select('id, full_name').eq('id', user.id).single();
+        if (!profile || !profile.full_name) {
+            toast.warning("Por favor completa tu perfil antes de reservar.");
+            router.push('/dashboard/client/profile');
+            return;
+        }
+
+        // Construct timestamp
+        const [hours, minutes] = selectedTime.split(':').map(Number);
+        const startDate = new Date(selectedDate);
+        startDate.setHours(hours, minutes, 0, 0);
+
+        // Duration 1 hour default
+        const endDate = new Date(startDate);
+        endDate.setHours(hours + 1, minutes, 0, 0);
+
+        const { error } = await supabase
+            .from('appointments')
+            .insert({
+                client_id: user.id,
+                start_time: startDate.toISOString(),
+                end_time: endDate.toISOString(),
+                status: 'confirmed'
+            });
+
+        setBooking(false);
+
+        if (error) {
+            toast.error('Error al reservar: ' + error.message);
+        } else {
+            toast.success('¡Reserva Exitosa! Nos vemos pronto.');
+            setSelectedTime(null);
+            setTimeout(() => {
+                window.location.href = '/dashboard/client';
+            }, 1500);
+        }
+    };
+
+    const isTimeDisabled = (time: string) => unavailableSlots.includes(time);
 
     return (
         <div className={styles.container}>
-            {/* ... (Date picker remains same) */}
             <h3 className={styles.sectionTitle}>1. Elige el día</h3>
             <div className={styles.daysGrid}>
                 {weekDays.map((date, index) => {
@@ -170,7 +228,6 @@ export const TimeSlotPicker = () => {
                 )}
             </div>
 
-            {/* ... (Action area remains same) */}
             <div className={styles.actionArea}>
                 <PrimaryButton
                     fullWidth
