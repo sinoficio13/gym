@@ -50,6 +50,7 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [view, setView] = useState<'week' | 'day' | 'agenda'>('agenda'); // Default to agenda for Mobile
     const [appointments, setAppointments] = useState<any[]>([]);
+    const [blockedSlots, setBlockedSlots] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
 
@@ -87,21 +88,29 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
         const supabase = createClient();
         const { start, end } = getRange(currentDate);
 
-        const { data, error } = await supabase
+        // Fetch Appointments
+        const { data: appData, error: appError } = await supabase
             .from('appointments')
             .select('*, profiles(full_name, phone, email, training_goal, birth_date, avatar_url)')
             .gte('start_time', start.toISOString())
             .lte('start_time', end.toISOString())
             .order('start_time', { ascending: true }); // Important for Agenda
 
-        if (data) {
-            setAppointments(data);
+        // Fetch Blocked Slots
+        const { data: blockData, error: blockError } = await supabase
+            .from('blocked_slots')
+            .select('*')
+            .gte('start_time', start.toISOString())
+            .lte('start_time', end.toISOString());
+
+        if (appData) {
+            setAppointments(appData);
             if (onStatsUpdate) {
                 const now = new Date();
                 const todayStr = now.toDateString();
-                const todayCount = data.filter(a => new Date(a.start_time).toDateString() === todayStr).length;
-                const visibleCount = data.length;
-                const uniqueClients = new Set(data.map(a => a.user_id || a.profiles?.email)).size;
+                const todayCount = appData.filter(a => new Date(a.start_time).toDateString() === todayStr).length;
+                const visibleCount = appData.length;
+                const uniqueClients = new Set(appData.map(a => a.user_id || a.profiles?.email)).size;
 
                 onStatsUpdate({
                     today: todayCount,
@@ -111,12 +120,19 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
             }
         } else {
             setAppointments([]);
-            if (error) {
-                console.error('Error fetching appointments:', error);
+            if (appError) {
+                console.error('Error fetching appointments:', appError);
                 toast.error('Error cargando citas.');
             }
             if (onStatsUpdate) onStatsUpdate({ today: 0, week: 0, clients: 0 });
         }
+
+        if (blockData) {
+            setBlockedSlots(blockData);
+        } else {
+            setBlockedSlots([]);
+        }
+
         setLoading(false);
     };
 
@@ -125,16 +141,28 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
         loadAppointments();
 
         const supabase = createClient();
-        const channel = supabase
+
+        // Appointments Subscription
+        const appChannel = supabase
             .channel('public:appointments')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, (payload) => {
-                console.log('Real-time update:', payload);
-                loadAppointments(); // Refresh data on any change
+                console.log('Real-time update (appointments):', payload);
+                loadAppointments();
+            })
+            .subscribe();
+
+        // Blocked Slots Subscription
+        const blockChannel = supabase
+            .channel('public:blocked_slots')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'blocked_slots' }, (payload) => {
+                console.log('Real-time update (blocked_slots):', payload);
+                loadAppointments();
             })
             .subscribe();
 
         return () => {
-            supabase.removeChannel(channel);
+            supabase.removeChannel(appChannel);
+            supabase.removeChannel(blockChannel);
         };
     }, [currentDate, view]);
 
@@ -147,6 +175,46 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
             newDate.setDate(newDate.getDate() + offset);
         }
         setCurrentDate(newDate);
+    };
+
+    const handleSlotClick = async (date: Date, hour: number) => {
+        // Calculate clicked time
+        const slotTime = new Date(date);
+        slotTime.setHours(Math.floor(hour), (hour % 1) * 60, 0, 0);
+
+        // Check if blocked
+        const isBlocked = blockedSlots.find(b => {
+            const start = new Date(b.start_time);
+            return start.getTime() === slotTime.getTime();
+        });
+
+        if (isBlocked) {
+            // Unblock? (Optional context menu or confirm)
+            if (confirm('¿Desbloquear este horario?')) {
+                const supabase = createClient();
+                await supabase.from('blocked_slots').delete().eq('id', isBlocked.id);
+                toast.success('Horario desbloqueado');
+            }
+            return;
+        }
+
+        // Block or Book? For now default to Block on empty slot click in admin?
+        // Actually, let's make it a prompt or simple toggle.
+        // Simplified: Click = Block specific hour.
+        if (confirm(`¿Bloquear horario ${formatHour(hour)}?`)) {
+            const supabase = createClient();
+            const endTime = new Date(slotTime);
+            endTime.setHours(endTime.getHours() + 1); // Default 1 hour block
+
+            const { error } = await supabase.from('blocked_slots').insert({
+                start_time: slotTime.toISOString(),
+                end_time: endTime.toISOString(),
+                reason: 'Admin Block'
+            });
+
+            if (error) toast.error('Error al bloquear');
+            else toast.success('Horario bloqueado');
+        }
     };
 
     // ... (days calculation)
@@ -303,8 +371,32 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
                                 <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{day.getDate()}</div>
                             </div>
 
-                            {/* Grid Lines */}
-                            {HOURS.map(h => <div key={h} className={styles.hourCell}></div>)}
+                            {/* Grid Lines & Slots */}
+                            {HOURS.map(h => {
+                                // Check if this specific slot is blocked
+                                const isBlocked = blockedSlots.some(b => {
+                                    const bStart = new Date(b.start_time);
+                                    return bStart.getDate() === day.getDate() &&
+                                        Math.abs((bStart.getHours() + bStart.getMinutes() / 60) - h) < 0.1;
+                                });
+
+                                return (
+                                    <div
+                                        key={h}
+                                        className={styles.hourCell}
+                                        style={{
+                                            backgroundColor: isBlocked ? 'rgba(255, 255, 255, 0.05)' : 'transparent',
+                                            backgroundImage: isBlocked ? 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 20px)' : 'none',
+                                            cursor: 'pointer'
+                                        }}
+                                        onClick={() => handleSlotClick(day, h)}
+                                    >
+                                        {isBlocked && (
+                                            <div style={{ fontSize: '0.7rem', color: '#aaa', padding: '4px' }}>🔒 No disp.</div>
+                                        )}
+                                    </div>
+                                );
+                            })}
 
                             {/* Appointments */}
                             {appointments
