@@ -110,13 +110,7 @@ export const AppointmentModal = ({ appointment, onClose, onUpdate }: Appointment
         }
     };
 
-    const GOAL_TRANSLATIONS: Record<string, string> = {
-        'weight_loss': 'Pérdida de Peso',
-        'muscle_gain': 'Ganancia Muscular',
-        'endurance': 'Resistencia',
-        'flexibility': 'Flexibilidad',
-        'general_health': 'Salud General'
-    };
+    // Removed GOAL_TRANSLATIONS as data is now native Spanish
 
     const client = appointment.profiles || {};
 
@@ -169,7 +163,7 @@ export const AppointmentModal = ({ appointment, onClose, onUpdate }: Appointment
                         </div>
                         {client.training_goal && (
                             <div style={{ marginTop: '12px', fontSize: '0.9rem', color: '#ccc' }}>
-                                <strong style={{ color: '#aaa' }}>Objetivo:</strong> {GOAL_TRANSLATIONS[client.training_goal] || client.training_goal}
+                                <strong style={{ color: '#aaa' }}>Objetivo:</strong> {client.training_goal}
                             </div>
                         )}
                     </div>

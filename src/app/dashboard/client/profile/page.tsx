@@ -24,13 +24,13 @@ export default function ProfilePage() {
     const [notes, setNotes] = useState('');
 
     const TRAINING_GOALS = [
-        { value: 'hypertrophy', label: 'Ganar Masa Muscular (Hipertrofia)' },
-        { value: 'weight_loss', label: 'Pérdida de Peso / Grasa' },
-        { value: 'strength', label: 'Ganar Fuerza Pura' },
-        { value: 'definition', label: 'Definición / Tonificación' },
-        { value: 'health', label: 'Salud General y Bienestar' },
-        { value: 'sport', label: 'Rendimiento Deportivo' },
-        { value: 'rehab', label: 'Rehabilitación / Prevención de Lesiones' },
+        { value: 'Ganar Masa Muscular (Hipertrofia)', label: 'Ganar Masa Muscular (Hipertrofia)' },
+        { value: 'Pérdida de Peso / Grasa', label: 'Pérdida de Peso / Grasa' },
+        { value: 'Ganar Fuerza Pura', label: 'Ganar Fuerza Pura' },
+        { value: 'Definición / Tonificación', label: 'Definición / Tonificación' },
+        { value: 'Salud General y Bienestar', label: 'Salud General y Bienestar' },
+        { value: 'Rendimiento Deportivo', label: 'Rendimiento Deportivo' },
+        { value: 'Rehabilitación / Prevención de Lesiones', label: 'Rehabilitación / Prevención de Lesiones' },
     ];
 
     useEffect(() => {
