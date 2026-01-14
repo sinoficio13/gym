@@ -211,7 +211,10 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
             setBlockedSlots(prev => prev.filter(b => b.id !== isBlocked.id));
 
             toast.promise(
-                supabase.from('blocked_slots').delete().eq('id', isBlocked.id),
+                (async () => {
+                    const { error } = await supabase.from('blocked_slots').delete().eq('id', isBlocked.id);
+                    if (error) throw error;
+                })(),
                 {
                     loading: 'Desbloqueando...',
                     success: 'Horario desbloqueado',
@@ -237,11 +240,14 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
             setBlockedSlots(prev => [...prev, newBlock]);
 
             toast.promise(
-                supabase.from('blocked_slots').insert({
-                    start_time: slotTime.toISOString(),
-                    end_time: endTime.toISOString(),
-                    reason: 'Admin Block'
-                }),
+                (async () => {
+                    const { error } = await supabase.from('blocked_slots').insert({
+                        start_time: slotTime.toISOString(),
+                        end_time: endTime.toISOString(),
+                        reason: 'Admin Block'
+                    });
+                    if (error) throw error;
+                })(),
                 {
                     loading: 'Bloqueando...',
                     success: 'Horario bloqueado',
