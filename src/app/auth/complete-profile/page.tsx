@@ -9,10 +9,11 @@ import styles from './CompleteProfile.module.css';
 export default function CompleteProfilePage() {
     const supabase = createClient();
     const router = useRouter();
-    const [loading, setLoading] = useState(true); // Start loading to fetch profile
+    const [loading, setLoading] = useState(true);
     const [formData, setFormData] = useState({
         full_name: '',
         cedula: '',
+        birth_date: '',
         age: '',
         phone: '',
         notes: ''
@@ -30,7 +31,6 @@ export default function CompleteProfilePage() {
                     return;
                 }
 
-                // Fetch existing data
                 const { data: profile, error: dbError } = await supabase
                     .from('profiles')
                     .select('*')
@@ -43,6 +43,11 @@ export default function CompleteProfilePage() {
                     setFormData(prev => ({
                         ...prev,
                         full_name: profile.full_name || '',
+                        birth_date: profile.birth_date || '', // Load existing birth_date
+                        age: profile.age?.toString() || '',
+                        cedula: profile.cedula || '',
+                        phone: profile.phone || '',
+                        notes: profile.notes || ''
                     }));
                 }
             } catch (err) {
@@ -54,7 +59,6 @@ export default function CompleteProfilePage() {
 
         fetchProfile();
 
-        // Safety timeout
         const timer = setTimeout(() => {
             if (mounted && loading) setLoading(false);
         }, 5000);
@@ -64,6 +68,24 @@ export default function CompleteProfilePage() {
             clearTimeout(timer);
         };
     }, []);
+
+    const calculateAge = (birthDate: string) => {
+        if (!birthDate) return '';
+        const today = new Date();
+        const birth = new Date(birthDate);
+        let age = today.getFullYear() - birth.getFullYear();
+        const m = today.getMonth() - birth.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+            age--;
+        }
+        return age.toString();
+    };
+
+    const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const date = e.target.value;
+        const age = calculateAge(date);
+        setFormData(prev => ({ ...prev, birth_date: date, age }));
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -77,7 +99,8 @@ export default function CompleteProfilePage() {
             .update({
                 full_name: formData.full_name,
                 cedula: formData.cedula,
-                age: parseInt(formData.age),
+                birth_date: formData.birth_date ? formData.birth_date : null,
+                age: formData.age ? parseInt(formData.age) : null,
                 phone: formData.phone,
                 notes: formData.notes,
             })
@@ -136,28 +159,40 @@ export default function CompleteProfilePage() {
 
                     <div className={styles.row}>
                         <div className={`${styles.inputGroup} ${styles.col}`}>
-                            <label className={styles.label}>Edad</label>
+                            <label className={styles.label}>Fecha de Nacimiento</label>
                             <input
-                                type="number"
+                                type="date"
                                 required
                                 className={styles.input}
-                                value={formData.age}
-                                onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-                                placeholder="Ej: 28"
+                                value={formData.birth_date}
+                                onChange={handleDateChange}
+                                style={{ colorScheme: 'dark' }} // Force dark calendar icon
                             />
                         </div>
 
                         <div className={`${styles.inputGroup} ${styles.col}`}>
-                            <label className={styles.label}>WhatsApp</label>
+                            <label className={styles.label}>Edad (Calc)</label>
                             <input
-                                type="tel"
-                                required
+                                type="text"
+                                disabled
                                 className={styles.input}
-                                value={formData.phone}
-                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                placeholder="+58..."
+                                value={formData.age}
+                                placeholder="--"
+                                style={{ opacity: 0.7, cursor: 'not-allowed' }}
                             />
                         </div>
+                    </div>
+
+                    <div className={styles.inputGroup}>
+                        <label className={styles.label}>WhatsApp</label>
+                        <input
+                            type="tel"
+                            required
+                            className={styles.input}
+                            value={formData.phone}
+                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                            placeholder="+58..."
+                        />
                     </div>
 
                     <div className={styles.inputGroup}>
