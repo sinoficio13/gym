@@ -152,6 +152,7 @@ export const UserModal = ({ user, onClose, onUpdate }: UserModalProps) => {
                                 style={inputStyle}
                             >
                                 <option value="Free">Gratuito / Sin Plan</option>
+                                <option value="Semanal">Semanal</option>
                                 <option value="Mensual">Mensual</option>
                                 <option value="Trimestral">Trimestral</option>
                                 <option value="Semestral">Semestral</option>
