@@ -17,8 +17,25 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Gym Instructor Premium",
-  description: "Agenda tu cita de entrenamiento personal.",
+  metadataBase: new URL('https://gym-instructor-premium.vercel.app'),
+  title: {
+    default: "Gym Instructor Premium",
+    template: "%s | Gym Instructor"
+  },
+  description: "Agenda tu cita de entrenamiento personal y transforma tu cuerpo. Gestión profesional de citas y rutinas.",
+  openGraph: {
+    title: "Gym Instructor Premium",
+    description: "Agenda tu cita de entrenamiento personal y transforma tu cuerpo.",
+    url: '/',
+    siteName: 'Gym Instructor',
+    locale: 'es_ES',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "Gym Instructor Premium",
+    description: "Agenda tu cita de entrenamiento personal.",
+  },
 };
 
 import { Toaster } from "@/components/ui/Toaster";
