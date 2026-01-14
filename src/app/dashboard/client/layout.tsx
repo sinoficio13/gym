@@ -25,14 +25,19 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             const { data: isAdmin } = await supabase.rpc('is_admin');
 
             if (isAdmin) {
-                setNavItems(prev => [
-                    ...prev,
-                    {
-                        href: '/admin/dashboard',
-                        label: 'Volver a Admin',
-                        icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a9 9 0 0 0 0 18 9 9 0 0 0 0-18z"></path><path d="M12 8v8"></path><path d="M8 12h8"></path></svg>
-                    }
-                ]);
+                setNavItems(prev => {
+                    // Prevent duplicate addition (React Strict Mode runs effects twice in dev)
+                    if (prev.some(item => item.href === '/admin/dashboard')) return prev;
+
+                    return [
+                        ...prev,
+                        {
+                            href: '/admin/dashboard',
+                            label: 'Volver a Admin',
+                            icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a9 9 0 0 0 0 18 9 9 0 0 0 0-18z"></path><path d="M12 8v8"></path><path d="M8 12h8"></path></svg>
+                        }
+                    ];
+                });
             }
         };
         checkAdmin();
