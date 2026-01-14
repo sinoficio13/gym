@@ -96,15 +96,17 @@ export default function CompleteProfilePage() {
 
         const { error } = await supabase
             .from('profiles')
-            .update({
+            .upsert({
+                id: user.id, // Required for upsert
+                email: user.email, // Good to ensure email is set if creating new row
                 full_name: formData.full_name,
                 cedula: formData.cedula,
                 birth_date: formData.birth_date ? formData.birth_date : null,
                 age: formData.age ? parseInt(formData.age) : null,
                 phone: formData.phone,
                 notes: formData.notes,
-            })
-            .eq('id', user.id);
+                updated_at: new Date().toISOString(),
+            });
 
         if (error) {
             alert('Error: ' + error.message);
