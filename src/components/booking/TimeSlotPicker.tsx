@@ -111,7 +111,7 @@ export const TimeSlotPicker = () => {
 
             // Mark Unavailable
             const blocked = baseSlots.filter(h => {
-                const isFull = (slotCounts[h] || 0) >= 3; // Capacity limit
+                const isFull = (slotCounts[h] || 0) >= 10; // Capacity limit increased to 10 per hour
                 const isAlreadyBooked = userBookedSlots.includes(h); // Prevent double booking
                 const isAdminBlocked = adminBlockedSlots.includes(h); // Admin Block
                 return isFull || isAlreadyBooked || isAdminBlocked;
