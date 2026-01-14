@@ -10,10 +10,37 @@ const clientNavItems = [
     { href: '/dashboard/client/profile', label: 'Perfil', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> },
 ];
 
+import { useState, useEffect } from 'react';
+import { createClient } from '@/lib/supabase/client';
+
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
+    const [navItems, setNavItems] = useState(clientNavItems);
+
+    useEffect(() => {
+        const checkAdmin = async () => {
+            const supabase = createClient();
+            // Check if user is admin via RPC or Role
+            // For safety, let's use the secure RPC if available, or just check role metadata if simple
+            // Given I fixed is_admin() RPC, let's use it for true security
+            const { data: isAdmin } = await supabase.rpc('is_admin');
+
+            if (isAdmin) {
+                setNavItems(prev => [
+                    ...prev,
+                    {
+                        href: '/admin/dashboard',
+                        label: 'Volver a Admin',
+                        icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a9 9 0 0 0 0 18 9 9 0 0 0 0-18z"></path><path d="M12 8v8"></path><path d="M8 12h8"></path></svg>
+                    }
+                ]);
+            }
+        };
+        checkAdmin();
+    }, []);
+
     return (
         <AppShell
-            navItems={clientNavItems}
+            navItems={navItems}
             title="Eucaris Pereira"
             subtitle="Portal de Cliente"
         >
