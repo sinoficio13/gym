@@ -120,24 +120,48 @@ export default function ClientDashboardHome() {
 
                 {/* Current Plan Card */}
                 <div className={styles.cardContainer}>
-                    <GlassCard>
+                    <GlassCard
+                        style={{
+                            borderLeft: profile?.subscription_status === 'active'
+                                ? '4px solid #22c55e'
+                                : '4px solid #ef4444'
+                        }}
+                    >
                         <h3 className={styles.cardTitle}>Plan Actual</h3>
-                        <div style={{ padding: '1rem', background: 'rgba(103, 80, 164, 0.1)', borderRadius: '12px', marginBottom: '1.5rem', border: '1px solid rgba(103, 80, 164, 0.2)' }}>
-                            <p style={{ color: '#d0bcff', fontWeight: 'bold', fontSize: '1.1rem' }}>
-                                {profile?.subscription_plan || 'Plan Básico'}
-                            </p>
-                            <p style={{ fontSize: '0.85rem', color: '#aaa', marginTop: '4px' }}>
-                                {profile?.subscription_status === 'active' ? '🟢 Activo' : '🔴 Inactivo/Pendiente'}
-                            </p>
+                        <div style={{
+                            padding: '1rem',
+                            background: profile?.subscription_status === 'active'
+                                ? 'rgba(34, 197, 94, 0.1)'
+                                : 'rgba(239, 68, 68, 0.1)',
+                            borderRadius: '12px',
+                            marginBottom: '1rem',
+                            border: '1px solid rgba(255,255,255,0.05)'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <p style={{ color: 'white', fontWeight: 'bold', fontSize: '1.2rem' }}>
+                                    {profile?.subscription_plan === 'Free' ? 'Sin Plan' : profile?.subscription_plan}
+                                </p>
+                                {profile?.subscription_status === 'active' ? (
+                                    <span style={{ fontSize: '0.8rem', padding: '2px 8px', borderRadius: '12px', background: '#22c55e', color: 'black', fontWeight: 'bold' }}>Activo</span>
+                                ) : (
+                                    <span style={{ fontSize: '0.8rem', padding: '2px 8px', borderRadius: '12px', background: '#ef4444', color: 'white', fontWeight: 'bold' }}>
+                                        {profile?.subscription_status === 'pending' ? 'Pago Pendiente' : 'Vencido'}
+                                    </span>
+                                )}
+                            </div>
+
+                            {profile?.subscription_status !== 'active' && (
+                                <p style={{ fontSize: '0.9rem', color: '#ffaaaa', marginTop: '10px', lineHeight: '1.4' }}>
+                                    ⚠️ Tu suscripción requiere atención. Por favor contacta al administrador para regularizar tu pago.
+                                </p>
+                            )}
+
                             {profile?.subscription_expiry && (
-                                <p style={{ fontSize: '0.85rem', color: '#aaa', marginTop: '4px' }}>
+                                <p style={{ fontSize: '0.85rem', color: '#aaa', marginTop: '10px' }}>
                                     Vence el: {formatDate(profile.subscription_expiry)}
                                 </p>
                             )}
                         </div>
-                        <button className={styles.actionButton} style={{ marginTop: 'auto', opacity: 0.5, cursor: 'not-allowed' }}>
-                            Gestionado por Admin
-                        </button>
                     </GlassCard>
                 </div>
 

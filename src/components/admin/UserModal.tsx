@@ -139,8 +139,8 @@ export const UserModal = ({ user, onClose, onUpdate }: UserModalProps) => {
                                 style={inputStyle}
                             >
                                 <option value="active">🟢 Activo</option>
-                                <option value="inactive">🔴 Inactivo</option>
-                                <option value="pending">🟡 Pendiente</option>
+                                <option value="inactive">🔴 Inactivo (Vencido)</option>
+                                <option value="pending">🟡 Pendiente de Pago</option>
                             </select>
                         </div>
 
@@ -151,9 +151,11 @@ export const UserModal = ({ user, onClose, onUpdate }: UserModalProps) => {
                                 onChange={(e) => setPlan(e.target.value)}
                                 style={inputStyle}
                             >
-                                <option value="Basic">Básico</option>
-                                <option value="Premium">Premium</option>
-                                <option value="Pro">Pro</option>
+                                <option value="Free">Gratuito / Sin Plan</option>
+                                <option value="Mensual">Mensual</option>
+                                <option value="Trimestral">Trimestral</option>
+                                <option value="Semestral">Semestral</option>
+                                <option value="Anual">Anual</option>
                             </select>
                         </div>
 
