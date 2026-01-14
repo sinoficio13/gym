@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import styles from './CalendarView.module.css';
 import { createClient } from '@/lib/supabase/client';
 import { AppointmentModal } from './AppointmentModal';
@@ -166,6 +166,18 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
         };
     }, [currentDate, view]);
 
+    // Memoize blocked slots for O(1) lookup
+    const blockedSlotsSet = useMemo(() => {
+        const set = new Set<string>();
+        blockedSlots.forEach(b => {
+            const date = new Date(b.start_time);
+            // Multi-timezone safety: stick to local components as used in grid
+            const key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}-${date.getHours()}`;
+            set.add(key);
+        });
+        return set;
+    }, [blockedSlots]);
+
     // ... (navigate function)
     const navigate = (offset: number) => {
         const newDate = new Date(currentDate);
@@ -178,42 +190,67 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
     };
 
     const handleSlotClick = async (date: Date, hour: number) => {
-        // Calculate clicked time
         const slotTime = new Date(date);
         slotTime.setHours(Math.floor(hour), (hour % 1) * 60, 0, 0);
 
-        // Check if blocked
+        // O(1) Check using Set logic fallback or direct find
+        const key = `${slotTime.getFullYear()}-${slotTime.getMonth()}-${slotTime.getDate()}-${slotTime.getHours()}`;
         const isBlocked = blockedSlots.find(b => {
-            const start = new Date(b.start_time);
-            return start.getTime() === slotTime.getTime();
+            const bStart = new Date(b.start_time);
+            return bStart.getFullYear() === slotTime.getFullYear() &&
+                bStart.getMonth() === slotTime.getMonth() &&
+                bStart.getDate() === slotTime.getDate() &&
+                bStart.getHours() === slotTime.getHours();
         });
 
+        const supabase = createClient();
+
         if (isBlocked) {
-            // Unblock? (Optional context menu or confirm)
-            if (confirm('¿Desbloquear este horario?')) {
-                const supabase = createClient();
-                await supabase.from('blocked_slots').delete().eq('id', isBlocked.id);
-                toast.success('Horario desbloqueado');
-            }
-            return;
-        }
+            // Unblock immediately (Optimistic)
+            const previousBlocks = [...blockedSlots];
+            setBlockedSlots(prev => prev.filter(b => b.id !== isBlocked.id));
 
-        // Block or Book? For now default to Block on empty slot click in admin?
-        // Actually, let's make it a prompt or simple toggle.
-        // Simplified: Click = Block specific hour.
-        if (confirm(`¿Bloquear horario ${formatHour(hour)}?`)) {
-            const supabase = createClient();
+            toast.promise(
+                supabase.from('blocked_slots').delete().eq('id', isBlocked.id),
+                {
+                    loading: 'Desbloqueando...',
+                    success: 'Horario desbloqueado',
+                    error: () => {
+                        setBlockedSlots(previousBlocks);
+                        return 'Error al desbloquear';
+                    }
+                }
+            );
+        } else {
+            // Block immediately (Optimistic)
             const endTime = new Date(slotTime);
-            endTime.setHours(endTime.getHours() + 1); // Default 1 hour block
+            endTime.setHours(endTime.getHours() + 1);
 
-            const { error } = await supabase.from('blocked_slots').insert({
+            const newBlock = {
+                id: 'temp-' + Date.now(),
                 start_time: slotTime.toISOString(),
                 end_time: endTime.toISOString(),
                 reason: 'Admin Block'
-            });
+            };
 
-            if (error) toast.error('Error al bloquear');
-            else toast.success('Horario bloqueado');
+            const previousBlocks = [...blockedSlots];
+            setBlockedSlots(prev => [...prev, newBlock]);
+
+            toast.promise(
+                supabase.from('blocked_slots').insert({
+                    start_time: slotTime.toISOString(),
+                    end_time: endTime.toISOString(),
+                    reason: 'Admin Block'
+                }),
+                {
+                    loading: 'Bloqueando...',
+                    success: 'Horario bloqueado',
+                    error: () => {
+                        setBlockedSlots(previousBlocks);
+                        return 'Error al bloquear';
+                    }
+                }
+            );
         }
     };
 
