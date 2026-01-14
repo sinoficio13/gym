@@ -5,49 +5,19 @@ import styles from './CalendarView.module.css';
 import { createClient } from '@/lib/supabase/client';
 import { AppointmentModal } from './AppointmentModal';
 
+import { toast } from 'sonner';
+
 const HOURS = Array.from({ length: 16 }, (_, i) => i + 6); // 06:00 to 21:00
 
-// 1. Define Solid Colors for Borders (Accents)
-// 1. Define Solid Colors for Borders (Accents)
-const GOAL_ACCENTS: Record<string, string> = {
-    'Pérdida de Peso / Grasa': '#22c55e',      // Green 500
-    'Ganar Masa Muscular (Hipertrofia)': '#ef4444',      // Red 500
-    'Resistencia': '#3b82f6',        // Blue 500 (Legacy/Simpler)
-    'Rendimiento Deportivo': '#3b82f6', // Blue 500
-    'Definición / Tonificación': '#a855f7',      // Purple 500
-    'Salud General y Bienestar': '#f59e0b',   // Amber 500
-    'Ganar Fuerza Pura': '#ec4899', // Pink 500?
-    'Rehabilitación / Prevención de Lesiones': '#14b8a6', // Teal 500
-    'default': '#6b7280'           // Gray 500
-};
-
-// 2. Define Tinted Backgrounds (Low Opacity)
-const GOAL_BACKGROUNDS: Record<string, string> = {
-    'Pérdida de Peso / Grasa': 'rgba(34, 197, 94, 0.15)',
-    'Ganar Masa Muscular (Hipertrofia)': 'rgba(239, 68, 68, 0.15)',
-    'Resistencia': 'rgba(59, 130, 246, 0.15)',
-    'Rendimiento Deportivo': 'rgba(59, 130, 246, 0.15)',
-    'Definición / Tonificación': 'rgba(168, 85, 247, 0.15)',
-    'Salud General y Bienestar': 'rgba(245, 158, 11, 0.15)',
-    'Ganar Fuerza Pura': 'rgba(236, 72, 153, 0.15)',
-    'Rehabilitación / Prevención de Lesiones': 'rgba(20, 184, 166, 0.15)',
-    'default': 'rgba(107, 114, 128, 0.15)'
-};
-
-// 3. Translations No Longer Needed (Data is in Spanish) but kept for legacy fallback just in case
-const GOAL_TRANSLATIONS: Record<string, string> = {
-    // Identity map for valid Spanish values
-    'Pérdida de Peso / Grasa': 'Pérdida de Peso / Grasa',
-    // ...
-};
-
-interface CalendarViewProps {
-    onStatsUpdate?: (stats: { today: number, week: number, clients: number }) => void;
-}
+// ... (existing constants)
 
 export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
+    // ... (existing state)
     const [currentDate, setCurrentDate] = useState(new Date());
     const [view, setView] = useState<'week' | 'day' | 'agenda'>('agenda'); // Default to agenda for Mobile
+    const [appointments, setAppointments] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
 
     useEffect(() => {
         // Auto-detect mobile and set agenda view
@@ -57,10 +27,6 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
             setView('week');
         }
     }, []);
-
-    const [appointments, setAppointments] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
 
     const getRange = (date: Date) => {
         const start = new Date(date);
@@ -84,7 +50,6 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
     };
 
     const loadAppointments = async () => {
-        setLoading(true);
         const supabase = createClient();
         const { start, end } = getRange(currentDate);
 
@@ -95,29 +60,51 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
             .lte('start_time', end.toISOString())
             .order('start_time', { ascending: true }); // Important for Agenda
 
-        import { toast } from 'sonner';
-
-        // ... (existing imports)
-
-        // ... inside loadAppointments ...
         if (data) {
             setAppointments(data);
-            // ... (stats update logic)
+            if (onStatsUpdate) {
+                const now = new Date();
+                const todayStr = now.toDateString();
+                const todayCount = data.filter(a => new Date(a.start_time).toDateString() === todayStr).length;
+                const visibleCount = data.length;
+                const uniqueClients = new Set(data.map(a => a.user_id || a.profiles?.email)).size;
+
+                onStatsUpdate({
+                    today: todayCount,
+                    week: visibleCount,
+                    clients: uniqueClients
+                });
+            }
         } else {
             setAppointments([]);
             if (error) {
                 console.error('Error fetching appointments:', error);
-                toast.error('Error cargando citas. Intenta recargar.');
+                toast.error('Error cargando citas.');
             }
             if (onStatsUpdate) onStatsUpdate({ today: 0, week: 0, clients: 0 });
         }
         setLoading(false);
     };
 
+    // Initial Load & Real-time Subscription
     useEffect(() => {
         loadAppointments();
+
+        const supabase = createClient();
+        const channel = supabase
+            .channel('public:appointments')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, (payload) => {
+                console.log('Real-time update:', payload);
+                loadAppointments(); // Refresh data on any change
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, [currentDate, view]);
 
+    // ... (navigate function)
     const navigate = (offset: number) => {
         const newDate = new Date(currentDate);
         if (view === 'week') {
@@ -128,6 +115,7 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
         setCurrentDate(newDate);
     };
 
+    // ... (days calculation)
     const days = [];
     const { start } = getRange(currentDate);
     const daysToShow = view === 'week' ? 7 : 1;
@@ -138,6 +126,7 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
         days.push(d);
     }
 
+    // ... (rest of helper functions)
     const getAppointmentStyle = (startTime: string, endTime: string) => {
         const start = new Date(startTime);
         const end = new Date(endTime);
@@ -154,16 +143,11 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
         return `${h}:00 ${period}`;
     };
 
-    // Helper to normalize goal keys if DB has mixed languages
-    // Helper to normalize goal keys
     const getGoalKey = (goal: string | undefined) => {
         if (!goal) return 'default';
-        if (GOAL_ACCENTS[goal]) return goal; // Direct match (Spanish)
-
-        // Legacy fallbacks (optional, can be removed if migration is perfect)
+        if (GOAL_ACCENTS[goal]) return goal;
         if (goal === 'weight_loss') return 'Pérdida de Peso / Grasa';
         if (goal === 'muscle_gain' || goal === 'hypertrophy') return 'Ganar Masa Muscular (Hipertrofia)';
-
         return 'default';
     };
 
@@ -179,15 +163,6 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
                         }
                     </div>
                     <button onClick={() => navigate(1)} className={styles.navButton}>&rarr;</button>
-
-                    <button
-                        onClick={() => loadAppointments()}
-                        className={styles.navButton}
-                        title="Recargar Citas"
-                        style={{ marginLeft: '8px', fontSize: '1rem' }}
-                    >
-                        🔄
-                    </button>
                 </div>
 
                 <div style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,0.1)', padding: '4px', borderRadius: '8px', marginTop: '10px' }}>
