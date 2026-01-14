@@ -16,7 +16,8 @@ export const HeroSection = () => {
         const code = searchParams.get("code");
         if (code) {
             console.log("Detectado código OAuth en landing. Redirigiendo a callback...");
-            router.push(`/auth/callback?code=${code}`);
+            // Force hard redirect to ensure middleware/server logic runs
+            window.location.href = `/auth/callback?code=${code}`;
         }
     }, [searchParams, router]);
 
