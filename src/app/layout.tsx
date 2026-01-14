@@ -30,11 +30,20 @@ export const metadata: Metadata = {
     siteName: 'Eucaris Pereira',
     locale: 'es_ES',
     type: 'website',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Eucaris Pereira - Entrenadora Personal',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: "Eucaris Pereira | Entrenadora Personal",
     description: "Agenda tu cita de entrenamiento personal.",
+    images: ['/og-image.png'],
   },
 };
 
