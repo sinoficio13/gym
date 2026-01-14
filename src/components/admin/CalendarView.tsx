@@ -331,6 +331,9 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
                                             <div style={{ fontWeight: '600', fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: '#fff', lineHeight: '1.2' }}>
                                                 {apt.profiles?.full_name || 'Desconocido'}
                                             </div>
+                                            <div style={{ fontSize: '0.7rem', opacity: 0.9, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: '#fff' }}>
+                                                {apt.profiles?.training_goal || ''}
+                                            </div>
                                         </div>
                                     );
                                 })
