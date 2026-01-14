@@ -41,6 +41,10 @@ const GOAL_BACKGROUNDS: Record<string, string> = {
     'default': 'rgba(107, 114, 128, 0.15)'
 };
 
+interface CalendarViewProps {
+    onStatsUpdate?: (stats: { today: number, week: number, clients: number }) => void;
+}
+
 export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
     // ... (existing state)
     const [currentDate, setCurrentDate] = useState(new Date());
