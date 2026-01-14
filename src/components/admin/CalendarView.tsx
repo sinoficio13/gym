@@ -291,15 +291,97 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
         days.push(d);
     }
 
+    // Helper to detect overlaps and assign visual slots
+    const organizeAppointments = (dailyAppointments: any[]) => {
+        // 1. Sort by start time, then duration (longer first)
+        const sorted = [...dailyAppointments].sort((a, b) => {
+            const startA = new Date(a.start_time).getTime();
+            const startB = new Date(b.start_time).getTime();
+            if (startA !== startB) return startA - startB;
+            // secondary sort by end time (duration)
+            const endA = new Date(a.end_time).getTime();
+            const endB = new Date(b.end_time).getTime();
+            return endB - endA;
+        });
+
+        const arranged: any[] = [];
+        const columns: any[][] = []; // List of columns, each containing appointments
+
+        sorted.forEach(apt => {
+            const start = new Date(apt.start_time).getTime();
+            const end = new Date(apt.end_time).getTime();
+
+            // Find first column where this appointment fits without overlapping
+            let placed = false;
+            for (let i = 0; i < columns.length; i++) {
+                const col = columns[i];
+                // Check against last appointment in this column
+                // (Since we sorted by start time, we only need to check the last added one in the column if we just want simple packing,
+                // but for true visual overlap handling within a time block, we should check against ALL in column or just strict time end)
+                // Simplify: Check if the last item in this column ends before current starts.
+                const lastInCol = col[col.length - 1];
+                const lastEnd = new Date(lastInCol.end_time).getTime();
+
+                if (lastEnd <= start) {
+                    col.push(apt);
+                    apt.colIndex = i;
+                    placed = true;
+                    break;
+                }
+            }
+
+            if (!placed) {
+                // Create new column
+                columns.push([apt]);
+                apt.colIndex = columns.length - 1;
+            }
+            arranged.push(apt);
+        });
+
+        // This simple greedy 'packing' puts things in columns but doesn't necessarily expand them to full width.
+        // For a Google Calendar style, we want grouped blocks to share width.
+        // A simpler approach for this specific request (aesthetic sharing):
+        // Detect groups of colliding events given the sorted list.
+
+        return sorted.map(apt => {
+            // Basic collision detection against all others to find 'max concurrent'
+            // This is an O(N^2) approach but N is small (appointments per day)
+            const start = new Date(apt.start_time).getTime();
+            const end = new Date(apt.end_time).getTime();
+
+            // Find all concurrent events
+            const concurrent = sorted.filter(other => {
+                const oStart = new Date(other.start_time).getTime();
+                const oEnd = new Date(other.end_time).getTime();
+                return (start < oEnd && end > oStart);
+            });
+
+            const count = concurrent.length;
+            // Find index of self in concurrent list (sorted by start time)
+            const index = concurrent.indexOf(apt);
+
+            return {
+                ...apt,
+                _width: 100 / count,
+                _left: (100 / count) * index
+            };
+        });
+    };
+
     // ... (rest of helper functions)
-    const getAppointmentStyle = (startTime: string, endTime: string) => {
+    const getAppointmentStyle = (startTime: string, endTime: string, widthPercent: number, leftPercent: number) => {
         const start = new Date(startTime);
         const end = new Date(endTime);
         const startHour = start.getHours() + (start.getMinutes() / 60);
         const endHour = end.getHours() + (end.getMinutes() / 60);
         const top = (startHour - 6) * 60;
         const height = (endHour - startHour) * 60;
-        return { top: `${top}px`, height: `${height}px` };
+        return {
+            top: `${top}px`,
+            height: `${height}px`,
+            width: `${widthPercent}%`,
+            left: `${leftPercent}%`
+        };
     };
 
     const formatHour = (hour: number) => {
@@ -318,6 +400,7 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
 
     return (
         <div className={styles.container}>
+            {/* Header ... */}
             <div className={styles.header}>
                 <div className={styles.headerControls}>
                     <button onClick={() => navigate(-1)} className={styles.navButton}>&larr;</button>
@@ -331,44 +414,15 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
                 </div>
 
                 <div style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,0.1)', padding: '4px', borderRadius: '8px', marginTop: '10px' }}>
-                    <button
-                        onClick={() => setView('agenda')}
-                        className={styles.viewButton}
-                        style={{
-                            background: view === 'agenda' ? 'var(--md-sys-color-primary)' : 'transparent',
-                            color: view === 'agenda' ? 'white' : 'inherit',
-                            border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: '500', fontSize: '0.8rem'
-                        }}
-                    >
-                        Agenda
-                    </button>
-                    <button
-                        onClick={() => setView('day')}
-                        className={styles.viewButton}
-                        style={{
-                            background: view === 'day' ? 'var(--md-sys-color-primary)' : 'transparent',
-                            color: view === 'day' ? 'white' : 'inherit',
-                            border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: '500', fontSize: '0.8rem'
-                        }}
-                    >
-                        Día
-                    </button>
-                    <button
-                        onClick={() => setView('week')}
-                        className={styles.viewButton}
-                        style={{
-                            background: view === 'week' ? 'var(--md-sys-color-primary)' : 'transparent',
-                            color: view === 'week' ? 'white' : 'inherit',
-                            border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: '500', fontSize: '0.8rem'
-                        }}
-                    >
-                        Semana
-                    </button>
+                    <button onClick={() => setView('agenda')} className={styles.viewButton} style={{ background: view === 'agenda' ? 'var(--md-sys-color-primary)' : 'transparent', color: view === 'agenda' ? 'white' : 'inherit', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: '500', fontSize: '0.8rem' }}>Agenda</button>
+                    <button onClick={() => setView('day')} className={styles.viewButton} style={{ background: view === 'day' ? 'var(--md-sys-color-primary)' : 'transparent', color: view === 'day' ? 'white' : 'inherit', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: '500', fontSize: '0.8rem' }}>Día</button>
+                    <button onClick={() => setView('week')} className={styles.viewButton} style={{ background: view === 'week' ? 'var(--md-sys-color-primary)' : 'transparent', color: view === 'week' ? 'white' : 'inherit', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: '500', fontSize: '0.8rem' }}>Semana</button>
                 </div>
             </div>
 
             {view === 'agenda' ? (
                 <div className={styles.agendaView}>
+                    {/* Agenda Content ... */}
                     {appointments.length === 0 ? (
                         <div className={styles.emptyState}>
                             <div style={{ fontSize: '3rem' }}>📅</div>
@@ -376,33 +430,21 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
                         </div>
                     ) : (
                         appointments.map(apt => {
+                            // ... existing agenda map logic
                             const rawGoal = apt.profiles?.training_goal;
                             const goalKey = getGoalKey(rawGoal);
                             const accentColor = GOAL_ACCENTS[goalKey] || GOAL_ACCENTS['default'];
                             const clientName = apt.profiles?.full_name || 'Desconocido';
                             const startTime = new Date(apt.start_time);
-
                             return (
-                                <div
-                                    key={apt.id}
-                                    className={styles.agendaItem}
-                                    style={{ borderLeft: `4px solid ${accentColor}` }}
-                                    onClick={() => setSelectedAppointment(apt)}
-                                >
+                                <div key={apt.id} className={styles.agendaItem} style={{ borderLeft: `4px solid ${accentColor}` }} onClick={() => setSelectedAppointment(apt)}>
                                     <div className={styles.agendaTime}>
-                                        <span className={styles.agendaHour}>
-                                            {startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }).split(' ')[0]}
-                                        </span>
-                                        <span className={styles.agendaPeriod}>
-                                            {startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }).split(' ')[1]}
-                                        </span>
+                                        <span className={styles.agendaHour}>{startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }).split(' ')[0]}</span>
+                                        <span className={styles.agendaPeriod}>{startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }).split(' ')[1]}</span>
                                     </div>
                                     <div className={styles.agendaDetails}>
                                         <div className={styles.agendaTitle}>{clientName}</div>
-                                        <div className={styles.agendaSubtitle}>
-                                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: accentColor }} />
-                                            {rawGoal || 'Sin Objetivo'}
-                                        </div>
+                                        <div className={styles.agendaSubtitle}><span style={{ width: 8, height: 8, borderRadius: '50%', background: accentColor }} />{rawGoal || 'Sin Objetivo'}</div>
                                     </div>
                                     <div style={{ alignSelf: 'center', opacity: 0.5 }}>&gt;</div>
                                 </div>
@@ -414,106 +456,92 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
                 <div className={styles.grid} style={{ gridTemplateColumns: `60px repeat(${daysToShow}, 1fr)` }}>
                     {/* Time Column */}
                     <div className={styles.timeColumn}>
-                        <div className={styles.dayHeader} style={{ borderBottom: 'none', visibility: 'hidden' }}>
-                            <div>&nbsp;</div>
-                            <div>&nbsp;</div>
-                        </div>
-                        {HOURS.map(h => (
-                            <div key={h} className={styles.timeLabel}>
-                                {formatHour(h)}
-                            </div>
-                        ))}
+                        <div className={styles.dayHeader} style={{ borderBottom: 'none', visibility: 'hidden' }}><div>&nbsp;</div><div>&nbsp;</div></div>
+                        {HOURS.map(h => (<div key={h} className={styles.timeLabel}>{formatHour(h)}</div>))}
                     </div>
 
                     {/* Days Columns */}
-                    {days.map((day, i) => (
-                        <div key={i} className={styles.dayColumn}>
-                            {/* Day Header */}
-                            <div className={`${styles.dayHeader} ${day.toDateString() === new Date().toDateString() ? styles.currentDayHeader : ''}`}>
-                                <div style={{ fontSize: '0.8rem', textTransform: 'uppercase' }}>{day.toLocaleDateString('es-ES', { weekday: view === 'day' ? 'long' : 'short' })}</div>
-                                <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{day.getDate()}</div>
-                            </div>
+                    {days.map((day, i) => {
+                        // Process appointments for this specific day to calculate overlap layout
+                        const dailyAppointments = appointments.filter(apt => new Date(apt.start_time).getDate() === day.getDate());
+                        const arrangedAppointments = organizeAppointments(dailyAppointments);
 
-                            <div className={styles.gridContent}>
-                                {/* Grid Lines & Slots */}
-                                {HOURS.map(h => {
-                                    // O(1) Lookup
-                                    const key = `${day.getFullYear()}-${day.getMonth()}-${day.getDate()}-${h}`;
-                                    const isBlocked = blockedSlotsSet.has(key);
+                        return (
+                            <div key={i} className={styles.dayColumn}>
+                                {/* Day Header */}
+                                <div className={`${styles.dayHeader} ${day.toDateString() === new Date().toDateString() ? styles.currentDayHeader : ''}`}>
+                                    <div style={{ fontSize: '0.8rem', textTransform: 'uppercase' }}>{day.toLocaleDateString('es-ES', { weekday: view === 'day' ? 'long' : 'short' })}</div>
+                                    <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{day.getDate()}</div>
+                                </div>
 
-                                    // Check if this specific blocked slot is an optimistic (temp-) one
-                                    const currentBlockedSlot = blockedSlots.find(b => {
-                                        const bStart = new Date(b.start_time);
-                                        return bStart.getFullYear() === day.getFullYear() &&
-                                            bStart.getMonth() === day.getMonth() &&
-                                            bStart.getDate() === day.getDate() &&
-                                            bStart.getHours() === h;
-                                    });
-                                    const isTempBlocked = isBlocked && String(currentBlockedSlot?.id).startsWith('temp-');
+                                <div className={styles.gridContent}>
+                                    {/* Grid Lines & Slots */}
+                                    {HOURS.map(h => {
+                                        const key = `${day.getFullYear()}-${day.getMonth()}-${day.getDate()}-${h}`;
+                                        const isBlocked = blockedSlotsSet.has(key);
+                                        const currentBlockedSlot = blockedSlots.find(b => {
+                                            const bStart = new Date(b.start_time);
+                                            return bStart.getFullYear() === day.getFullYear() && bStart.getMonth() === day.getMonth() && bStart.getDate() === day.getDate() && bStart.getHours() === h;
+                                        });
+                                        const isTempBlocked = isBlocked && String(currentBlockedSlot?.id).startsWith('temp-');
 
-                                    return (
-                                        <div
-                                            key={h}
-                                            className={styles.hourCell}
-                                            style={{
+                                        return (
+                                            <div key={h} className={styles.hourCell} style={{
                                                 backgroundColor: isBlocked ? 'rgba(255, 255, 255, 0.05)' : 'transparent',
                                                 backgroundImage: isBlocked ? 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 20px)' : 'none',
                                                 cursor: isTempBlocked ? 'wait' : 'pointer',
                                                 opacity: isTempBlocked ? 0.5 : 1,
-                                            }}
-                                            onClick={isTempBlocked ? undefined : () => handleSlotClick(day, h)}
-                                        >
-                                            {isBlocked && (
-                                                <div style={{ fontSize: '0.7rem', color: '#aaa', padding: '4px' }}>🔒</div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
+                                            }} onClick={isTempBlocked ? undefined : () => handleSlotClick(day, h)}>
+                                                {isBlocked && (<div style={{ fontSize: '0.7rem', color: '#aaa', padding: '4px' }}>🔒</div>)}
+                                            </div>
+                                        );
+                                    })}
 
-                                {/* Appointments */}
-                                {appointments
-                                    .filter(apt => new Date(apt.start_time).getDate() === day.getDate())
-                                    .map(apt => {
+                                    {/* Appointments with Layout Logic */}
+                                    {arrangedAppointments.map((apt: any) => {
                                         const rawGoal = apt.profiles?.training_goal;
                                         const goalKey = getGoalKey(rawGoal);
                                         const accentColor = GOAL_ACCENTS[goalKey] || GOAL_ACCENTS['default'];
                                         const bgColor = GOAL_BACKGROUNDS[goalKey] || GOAL_BACKGROUNDS['default'];
+
+                                        // Use the calculated _width and _left
+                                        const style = getAppointmentStyle(apt.start_time, apt.end_time, apt._width || 100, apt._left || 0);
 
                                         return (
                                             <div
                                                 key={apt.id}
                                                 className={styles.appointment}
                                                 style={{
-                                                    ...getAppointmentStyle(apt.start_time, apt.end_time),
+                                                    ...style,
                                                     background: bgColor,
-                                                    borderLeft: `4px solid ${accentColor}`,
-                                                    borderRadius: '4px',
-                                                    padding: '4px 8px',
+                                                    borderLeft: `3px solid ${accentColor}`, /* Thinner border for small widths */
+                                                    borderRadius: '3px',
+                                                    padding: '2px 4px', /* Smaller padding */
                                                     zIndex: 10,
                                                     display: 'flex',
                                                     flexDirection: 'column',
-                                                    justifyContent: 'center',
-                                                    gap: '2px',
-                                                    overflow: 'hidden'
+                                                    justifyContent: 'flex-start',
+                                                    gap: '1px',
+                                                    overflow: 'hidden',
+                                                    fontSize: '0.75rem' /* Base font size */
                                                 }}
                                                 onClick={(e) => { e.stopPropagation(); setSelectedAppointment(apt); }}
+                                                title={`${apt.profiles?.full_name} - ${apt.profiles?.training_goal}`} // Tooltip for small items
                                             >
-                                                <div style={{ fontWeight: '700', fontSize: '0.75rem', color: '#fff', lineHeight: '1.1' }}>
+                                                <div style={{ fontWeight: '700', fontSize: '0.7em', color: '#fff', lineHeight: '1.1' }}>
                                                     {new Date(apt.start_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
                                                 </div>
-                                                <div style={{ fontWeight: '600', fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: '#fff', lineHeight: '1.2' }}>
+                                                <div style={{ fontWeight: '600', fontSize: '0.8em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: '#fff', lineHeight: '1.2' }}>
                                                     {apt.profiles?.full_name || 'Desconocido'}
-                                                </div>
-                                                <div style={{ fontSize: '0.7rem', opacity: 0.9, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: '#fff' }}>
-                                                    {apt.profiles?.training_goal || ''}
                                                 </div>
                                             </div>
                                         );
                                     })
-                                }
+                                    }
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
 
@@ -521,10 +549,7 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
                 <AppointmentModal
                     appointment={selectedAppointment}
                     onClose={() => setSelectedAppointment(null)}
-                    onUpdate={() => {
-                        loadAppointments();
-                        setSelectedAppointment(null);
-                    }}
+                    onUpdate={() => { loadAppointments(); setSelectedAppointment(null); }}
                 />
             )}
         </div>
