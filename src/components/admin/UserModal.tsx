@@ -14,6 +14,7 @@ interface Profile {
     alias: string;
     subscription_status: 'active' | 'inactive' | 'pending';
     subscription_plan: string;
+    subscription_expiry?: string;
     avatar_url?: string;
 }
 
@@ -33,6 +34,7 @@ export const UserModal = ({ user, onClose, onUpdate }: UserModalProps) => {
     const [phone, setPhone] = useState(user.phone || '');
     const [status, setStatus] = useState(user.subscription_status || 'pending');
     const [plan, setPlan] = useState(user.subscription_plan || 'Basic');
+    const [expiry, setExpiry] = useState(user.subscription_expiry || '');
     const [role, setRole] = useState(user.role || 'user');
 
     const handleSave = async () => {
@@ -46,6 +48,7 @@ export const UserModal = ({ user, onClose, onUpdate }: UserModalProps) => {
                     phone: phone,
                     subscription_status: status,
                     subscription_plan: plan,
+                    subscription_expiry: expiry || null,
                     role: role
                 })
                 .eq('id', user.id);
@@ -152,6 +155,16 @@ export const UserModal = ({ user, onClose, onUpdate }: UserModalProps) => {
                                 <option value="Premium">Premium</option>
                                 <option value="Pro">Pro</option>
                             </select>
+                        </div>
+
+                        <div style={{ gridColumn: 'span 2' }}>
+                            <label style={{ display: 'block', fontSize: '0.8rem', color: '#aaa', marginBottom: '8px' }}>Fecha Vencimiento</label>
+                            <input
+                                type="date"
+                                value={expiry}
+                                onChange={(e) => setExpiry(e.target.value)}
+                                style={inputStyle}
+                            />
                         </div>
 
                         <div style={{ gridColumn: 'span 2', marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
