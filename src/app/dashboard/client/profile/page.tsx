@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 export default function ProfilePage() {
     const supabase = createClient();
@@ -77,10 +78,12 @@ export default function ProfilePage() {
             })
             .eq('id', profile.id);
 
+        // ... (in handleUpdate)
+
         if (error) {
-            alert('Error al actualizar: ' + error.message);
+            toast.error('Error al actualizar: ' + error.message);
         } else {
-            alert('Perfil actualizado correctamente ✨');
+            toast.success('Perfil actualizado correctamente ✨');
         }
         setUpdating(false);
     };

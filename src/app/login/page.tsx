@@ -5,6 +5,7 @@ import { PrimaryButton } from "@/components/ui/PrimaryButton";
 import styles from './page.module.css';
 import { createClient } from '@/lib/supabase/client';
 import { useState } from "react";
+import { toast } from 'sonner';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -30,10 +31,13 @@ export default function LoginPage() {
             },
         });
         setLoading(false);
+
+        // ... (in handleEmailLogin)
+
         if (error) {
-            alert("Error al enviar enlace: " + error.message);
+            toast.error("Error al enviar enlace: " + error.message);
         } else {
-            alert("¡Enlace mágico enviado! Revisa tu correo.");
+            toast.success("¡Enlace mágico enviado! Revisa tu correo.");
         }
     };
 

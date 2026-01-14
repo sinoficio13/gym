@@ -5,6 +5,7 @@ import { PrimaryButton } from '../ui/PrimaryButton';
 import styles from './TimeSlotPicker.module.css';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 const DAYS_MAP = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 const HOURS = ['07:00', '08:30', '10:00', '16:00', '17:30', '19:00', '20:30'];
@@ -34,7 +35,6 @@ export const TimeSlotPicker = () => {
     }, []);
 
     // Fetch unavailable slots when date changes
-    // Fetch slot availability
     useEffect(() => {
         if (!selectedDate) return;
 
@@ -73,9 +73,6 @@ export const TimeSlotPicker = () => {
                     }
                 });
 
-                // Determine effectively "unavailable" slots
-                // Rule 1: Slot has 3 or more bookings (FULL)
-                // Rule 2: User already has a booking in this slot (ALREADY BOOKED)
                 const blocked = HOURS.filter(h => {
                     const isFull = (slotCounts[h] || 0) >= 3;
                     const isAlreadyBooked = userBookedSlots.includes(h);
@@ -96,7 +93,7 @@ export const TimeSlotPicker = () => {
 
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
-            alert("Debes iniciar sesión para reservar.");
+            toast.error("Debes iniciar sesión para reservar.");
             router.push('/login');
             return;
         }
@@ -104,8 +101,8 @@ export const TimeSlotPicker = () => {
         // Check profile
         const { data: profile } = await supabase.from('profiles').select('id, full_name').eq('id', user.id).single();
         if (!profile || !profile.full_name) {
-            alert("Por favor completa tu perfil antes de reservar.");
-            router.push('/dashboard/client/profile'); // Nuevo link al portal
+            toast.warning("Por favor completa tu perfil antes de reservar.");
+            router.push('/dashboard/client/profile');
             return;
         }
 
@@ -130,11 +127,13 @@ export const TimeSlotPicker = () => {
         setBooking(false);
 
         if (error) {
-            alert('Error al reservar: ' + error.message);
+            toast.error('Error al reservar: ' + error.message);
         } else {
-            alert('¡Reserva Exitosa!');
+            toast.success('¡Reserva Exitosa! Nos vemos pronto.');
             setSelectedTime(null);
-            window.location.href = '/dashboard/client'; // Volver al home tras reservar
+            setTimeout(() => {
+                window.location.href = '/dashboard/client';
+            }, 1500);
         }
     };
 

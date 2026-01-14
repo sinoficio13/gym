@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { GlassCard } from '@/components/ui/GlassCard';
 import styles from './CompleteProfile.module.css';
+import { toast } from 'sonner';
 
 export default function CompleteProfilePage() {
     const supabase = createClient();
@@ -109,9 +110,12 @@ export default function CompleteProfilePage() {
             });
 
         if (error) {
-            alert('Error: ' + error.message);
+            toast.error('Error al guardar: ' + error.message);
         } else {
-            router.push('/dashboard/client/booking');
+            toast.success('¡Perfil completado! Redirigiendo...');
+            setTimeout(() => {
+                router.push('/dashboard/client/booking');
+            }, 1000);
         }
         setLoading(false);
     };

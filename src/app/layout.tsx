@@ -21,6 +21,8 @@ export const metadata: Metadata = {
   description: "Agenda tu cita de entrenamiento personal.",
 };
 
+import { Toaster } from "@/components/ui/Toaster";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -32,6 +34,7 @@ export default function RootLayout({
         <main className="min-h-screen flex flex-col items-center justify-center p-4">
           {children}
         </main>
+        <Toaster position="top-center" />
       </body>
     </html>
   );
