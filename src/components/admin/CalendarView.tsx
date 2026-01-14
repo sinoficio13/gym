@@ -373,12 +373,9 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
 
                             {/* Grid Lines & Slots */}
                             {HOURS.map(h => {
-                                // Check if this specific slot is blocked
-                                const isBlocked = blockedSlots.some(b => {
-                                    const bStart = new Date(b.start_time);
-                                    return bStart.getDate() === day.getDate() &&
-                                        Math.abs((bStart.getHours() + bStart.getMinutes() / 60) - h) < 0.1;
-                                });
+                                // O(1) Lookup
+                                const key = `${day.getFullYear()}-${day.getMonth()}-${day.getDate()}-${h}`;
+                                const isBlocked = blockedSlotsSet.has(key);
 
                                 return (
                                     <div
@@ -392,7 +389,7 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
                                         onClick={() => handleSlotClick(day, h)}
                                     >
                                         {isBlocked && (
-                                            <div style={{ fontSize: '0.7rem', color: '#aaa', padding: '4px' }}>🔒 No disp.</div>
+                                            <div style={{ fontSize: '0.7rem', color: '#aaa', padding: '4px' }}>🔒</div>
                                         )}
                                     </div>
                                 );
