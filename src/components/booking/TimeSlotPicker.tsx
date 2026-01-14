@@ -50,37 +50,57 @@ export const TimeSlotPicker = () => {
             const endOfDay = new Date(selectedDate!);
             endOfDay.setHours(23, 59, 59, 999);
 
-            const { data, error } = await supabase
+            // Fetch Appointments (Existing)
+            const { data: aptData } = await supabase
                 .from('appointments')
                 .select('start_time, client_id')
                 .gte('start_time', startOfDay.toISOString())
                 .lte('start_time', endOfDay.toISOString())
                 .neq('status', 'cancelled');
 
-            if (data) {
-                // Count bookings per slot
-                const slotCounts: Record<string, number> = {};
-                const userBookedSlots: string[] = [];
+            // Fetch Blocked Slots (New)
+            const { data: blockData } = await supabase
+                .from('blocked_slots')
+                .select('start_time, end_time')
+                .gte('start_time', startOfDay.toISOString())
+                .lte('start_time', endOfDay.toISOString());
 
-                data.forEach(apt => {
+            // Process Availability
+            const slotCounts: Record<string, number> = {};
+            const userBookedSlots: string[] = [];
+            const adminBlockedSlots: string[] = [];
+
+            // 1. Process Appointments
+            if (aptData) {
+                aptData.forEach(apt => {
                     const date = new Date(apt.start_time);
                     const timeKey = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
-
                     slotCounts[timeKey] = (slotCounts[timeKey] || 0) + 1;
-
-                    if (user && apt.client_id === user.id) {
-                        userBookedSlots.push(timeKey);
-                    }
+                    if (user && apt.client_id === user.id) userBookedSlots.push(timeKey);
                 });
-
-                const blocked = HOURS.filter(h => {
-                    const isFull = (slotCounts[h] || 0) >= 3;
-                    const isAlreadyBooked = userBookedSlots.includes(h);
-                    return isFull || isAlreadyBooked;
-                });
-
-                setUnavailableSlots(blocked);
             }
+
+            // 2. Process Blocked Slots
+            if (blockData) {
+                blockData.forEach(block => {
+                    const blockStart = new Date(block.start_time);
+                    // Simple check: if block starts at X hour, disable that slot.
+                    // For more complex blocks (ranges), we'd need to check overlaps.
+                    // Assuming blocks align with slots for now as per CalendarView logic.
+                    const timeKey = `${blockStart.getHours().toString().padStart(2, '0')}:${blockStart.getMinutes().toString().padStart(2, '0')}`;
+                    adminBlockedSlots.push(timeKey);
+                });
+            }
+
+            // 3. Mark Unavailable
+            const blocked = HOURS.filter(h => {
+                const isFull = (slotCounts[h] || 0) >= 3; // Capacity limit
+                const isAlreadyBooked = userBookedSlots.includes(h); // Prevent double booking
+                const isAdminBlocked = adminBlockedSlots.includes(h); // Admin Block
+                return isFull || isAlreadyBooked || isAdminBlocked;
+            });
+
+            setUnavailableSlots(blocked);
             setLoadingSlots(false);
         }
 
