@@ -229,8 +229,10 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
             const endTime = new Date(slotTime);
             endTime.setHours(endTime.getHours() + 1);
 
+            // Optimistic update
+            const tempId = 'temp-' + Date.now();
             const newBlock = {
-                id: 'temp-' + Date.now(),
+                id: tempId,
                 start_time: slotTime.toISOString(),
                 end_time: endTime.toISOString(),
                 reason: 'Admin Block'
@@ -241,12 +243,16 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
 
             toast.promise(
                 (async () => {
-                    const { error } = await supabase.from('blocked_slots').insert({
+                    const { data, error } = await supabase.from('blocked_slots').insert({
                         start_time: slotTime.toISOString(),
                         end_time: endTime.toISOString(),
                         reason: 'Admin Block'
-                    });
+                    }).select().single();
+
                     if (error) throw error;
+
+                    // Replace temp ID with real ID in state immediately
+                    setBlockedSlots(prev => prev.map(b => b.id === tempId ? data : b));
                 })(),
                 {
                     loading: 'Bloqueando...',
