@@ -176,7 +176,7 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
             <div className={styles.header}>
                 <div className={styles.headerControls}>
                     <button onClick={() => navigate(-1)} className={styles.navButton}>&larr;</button>
-                    <div style={{ fontWeight: 'bold', fontSize: '1.1rem', textTransform: 'capitalize', textAlign: 'center', flex: 1 }}>
+                    <div style={{ fontWeight: 'bold', fontSize: '1.2rem', textTransform: 'capitalize', textAlign: 'center', minWidth: '150px' }}>
                         {view === 'week'
                             ? start.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
                             : currentDate.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'long' })
@@ -214,8 +214,7 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
                         style={{
                             background: view === 'week' ? 'var(--md-sys-color-primary)' : 'transparent',
                             color: view === 'week' ? 'white' : 'inherit',
-                            border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: '500', fontSize: '0.8rem',
-                            display: 'none' // Hidden on mobile via CSS ideally, but simplified here
+                            border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: '500', fontSize: '0.8rem'
                         }}
                     >
                         Semana
