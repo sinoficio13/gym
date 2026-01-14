@@ -434,82 +434,84 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
                                 <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{day.getDate()}</div>
                             </div>
 
-                            {/* Grid Lines & Slots */}
-                            {HOURS.map(h => {
-                                // O(1) Lookup
-                                const key = `${day.getFullYear()}-${day.getMonth()}-${day.getDate()}-${h}`;
-                                const isBlocked = blockedSlotsSet.has(key);
+                            <div className={styles.gridContent}>
+                                {/* Grid Lines & Slots */}
+                                {HOURS.map(h => {
+                                    // O(1) Lookup
+                                    const key = `${day.getFullYear()}-${day.getMonth()}-${day.getDate()}-${h}`;
+                                    const isBlocked = blockedSlotsSet.has(key);
 
-                                // Check if this specific blocked slot is an optimistic (temp-) one
-                                const currentBlockedSlot = blockedSlots.find(b => {
-                                    const bStart = new Date(b.start_time);
-                                    return bStart.getFullYear() === day.getFullYear() &&
-                                        bStart.getMonth() === day.getMonth() &&
-                                        bStart.getDate() === day.getDate() &&
-                                        bStart.getHours() === h;
-                                });
-                                const isTempBlocked = isBlocked && String(currentBlockedSlot?.id).startsWith('temp-');
-
-                                return (
-                                    <div
-                                        key={h}
-                                        className={styles.hourCell}
-                                        style={{
-                                            backgroundColor: isBlocked ? 'rgba(255, 255, 255, 0.05)' : 'transparent',
-                                            backgroundImage: isBlocked ? 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 20px)' : 'none',
-                                            cursor: isTempBlocked ? 'wait' : 'pointer',
-                                            opacity: isTempBlocked ? 0.5 : 1,
-                                        }}
-                                        onClick={isTempBlocked ? undefined : () => handleSlotClick(day, h)}
-                                    >
-                                        {isBlocked && (
-                                            <div style={{ fontSize: '0.7rem', color: '#aaa', padding: '4px' }}>🔒</div>
-                                        )}
-                                    </div>
-                                );
-                            })}
-
-                            {/* Appointments */}
-                            {appointments
-                                .filter(apt => new Date(apt.start_time).getDate() === day.getDate())
-                                .map(apt => {
-                                    const rawGoal = apt.profiles?.training_goal;
-                                    const goalKey = getGoalKey(rawGoal);
-                                    const accentColor = GOAL_ACCENTS[goalKey] || GOAL_ACCENTS['default'];
-                                    const bgColor = GOAL_BACKGROUNDS[goalKey] || GOAL_BACKGROUNDS['default'];
+                                    // Check if this specific blocked slot is an optimistic (temp-) one
+                                    const currentBlockedSlot = blockedSlots.find(b => {
+                                        const bStart = new Date(b.start_time);
+                                        return bStart.getFullYear() === day.getFullYear() &&
+                                            bStart.getMonth() === day.getMonth() &&
+                                            bStart.getDate() === day.getDate() &&
+                                            bStart.getHours() === h;
+                                    });
+                                    const isTempBlocked = isBlocked && String(currentBlockedSlot?.id).startsWith('temp-');
 
                                     return (
                                         <div
-                                            key={apt.id}
-                                            className={styles.appointment}
+                                            key={h}
+                                            className={styles.hourCell}
                                             style={{
-                                                ...getAppointmentStyle(apt.start_time, apt.end_time),
-                                                background: bgColor,
-                                                borderLeft: `4px solid ${accentColor}`,
-                                                borderRadius: '4px',
-                                                padding: '4px 8px',
-                                                zIndex: 10,
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                justifyContent: 'center',
-                                                gap: '2px',
-                                                overflow: 'hidden'
+                                                backgroundColor: isBlocked ? 'rgba(255, 255, 255, 0.05)' : 'transparent',
+                                                backgroundImage: isBlocked ? 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 20px)' : 'none',
+                                                cursor: isTempBlocked ? 'wait' : 'pointer',
+                                                opacity: isTempBlocked ? 0.5 : 1,
                                             }}
-                                            onClick={(e) => { e.stopPropagation(); setSelectedAppointment(apt); }}
+                                            onClick={isTempBlocked ? undefined : () => handleSlotClick(day, h)}
                                         >
-                                            <div style={{ fontWeight: '700', fontSize: '0.75rem', color: '#fff', lineHeight: '1.1' }}>
-                                                {new Date(apt.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                            </div>
-                                            <div style={{ fontWeight: '600', fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: '#fff', lineHeight: '1.2' }}>
-                                                {apt.profiles?.full_name || 'Desconocido'}
-                                            </div>
-                                            <div style={{ fontSize: '0.7rem', opacity: 0.9, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: '#fff' }}>
-                                                {apt.profiles?.training_goal || ''}
-                                            </div>
+                                            {isBlocked && (
+                                                <div style={{ fontSize: '0.7rem', color: '#aaa', padding: '4px' }}>🔒</div>
+                                            )}
                                         </div>
                                     );
-                                })
-                            }
+                                })}
+
+                                {/* Appointments */}
+                                {appointments
+                                    .filter(apt => new Date(apt.start_time).getDate() === day.getDate())
+                                    .map(apt => {
+                                        const rawGoal = apt.profiles?.training_goal;
+                                        const goalKey = getGoalKey(rawGoal);
+                                        const accentColor = GOAL_ACCENTS[goalKey] || GOAL_ACCENTS['default'];
+                                        const bgColor = GOAL_BACKGROUNDS[goalKey] || GOAL_BACKGROUNDS['default'];
+
+                                        return (
+                                            <div
+                                                key={apt.id}
+                                                className={styles.appointment}
+                                                style={{
+                                                    ...getAppointmentStyle(apt.start_time, apt.end_time),
+                                                    background: bgColor,
+                                                    borderLeft: `4px solid ${accentColor}`,
+                                                    borderRadius: '4px',
+                                                    padding: '4px 8px',
+                                                    zIndex: 10,
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    justifyContent: 'center',
+                                                    gap: '2px',
+                                                    overflow: 'hidden'
+                                                }}
+                                                onClick={(e) => { e.stopPropagation(); setSelectedAppointment(apt); }}
+                                            >
+                                                <div style={{ fontWeight: '700', fontSize: '0.75rem', color: '#fff', lineHeight: '1.1' }}>
+                                                    {new Date(apt.start_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                                                </div>
+                                                <div style={{ fontWeight: '600', fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: '#fff', lineHeight: '1.2' }}>
+                                                    {apt.profiles?.full_name || 'Desconocido'}
+                                                </div>
+                                                <div style={{ fontSize: '0.7rem', opacity: 0.9, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: '#fff' }}>
+                                                    {apt.profiles?.training_goal || ''}
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                }
+                            </div>
                         </div>
                     ))}
                 </div>
