@@ -127,10 +127,19 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
             if (onStatsUpdate) onStatsUpdate({ today: 0, week: 0, clients: 0 });
         }
 
+        // Merge fetched blocked slots with any existing optimistic (temp-) blocked slots
+        const existingTempBlocks = blockedSlots.filter(b => String(b.id).startsWith('temp-'));
         if (blockData) {
-            setBlockedSlots(blockData);
+            // Filter out any fetched blocks that might correspond to existing temp blocks (if real ID came back)
+            const filteredBlockData = blockData.filter(dbBlock =>
+                !existingTempBlocks.some(tempBlock =>
+                    new Date(tempBlock.start_time).getTime() === new Date(dbBlock.start_time).getTime()
+                )
+            );
+            setBlockedSlots([...filteredBlockData, ...existingTempBlocks]);
         } else {
-            setBlockedSlots([]);
+            // If no new data, just keep the existing temp blocks
+            setBlockedSlots(existingTempBlocks);
         }
 
         setLoading(false);
@@ -193,8 +202,7 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
         const slotTime = new Date(date);
         slotTime.setHours(Math.floor(hour), (hour % 1) * 60, 0, 0);
 
-        // O(1) Check using Set logic fallback or direct find
-        const key = `${slotTime.getFullYear()}-${slotTime.getMonth()}-${slotTime.getDate()}-${slotTime.getHours()}`;
+        // Find the specific blocked slot, including optimistic ones
         const isBlocked = blockedSlots.find(b => {
             const bStart = new Date(b.start_time);
             return bStart.getFullYear() === slotTime.getFullYear() &&
@@ -202,6 +210,12 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
                 bStart.getDate() === slotTime.getDate() &&
                 bStart.getHours() === slotTime.getHours();
         });
+
+        // If it's an optimistically added block that hasn't been confirmed by DB yet, prevent interaction
+        if (isBlocked && String(isBlocked.id).startsWith('temp-')) {
+            toast.info('Por favor, espera a que se confirme el bloqueo/desbloqueo anterior.');
+            return;
+        }
 
         const supabase = createClient();
 
@@ -426,6 +440,16 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
                                 const key = `${day.getFullYear()}-${day.getMonth()}-${day.getDate()}-${h}`;
                                 const isBlocked = blockedSlotsSet.has(key);
 
+                                // Check if this specific blocked slot is an optimistic (temp-) one
+                                const currentBlockedSlot = blockedSlots.find(b => {
+                                    const bStart = new Date(b.start_time);
+                                    return bStart.getFullYear() === day.getFullYear() &&
+                                        bStart.getMonth() === day.getMonth() &&
+                                        bStart.getDate() === day.getDate() &&
+                                        bStart.getHours() === h;
+                                });
+                                const isTempBlocked = isBlocked && String(currentBlockedSlot?.id).startsWith('temp-');
+
                                 return (
                                     <div
                                         key={h}
@@ -433,9 +457,10 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
                                         style={{
                                             backgroundColor: isBlocked ? 'rgba(255, 255, 255, 0.05)' : 'transparent',
                                             backgroundImage: isBlocked ? 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 20px)' : 'none',
-                                            cursor: 'pointer'
+                                            cursor: isTempBlocked ? 'wait' : 'pointer',
+                                            opacity: isTempBlocked ? 0.5 : 1,
                                         }}
-                                        onClick={() => handleSlotClick(day, h)}
+                                        onClick={isTempBlocked ? undefined : () => handleSlotClick(day, h)}
                                     >
                                         {isBlocked && (
                                             <div style={{ fontSize: '0.7rem', color: '#aaa', padding: '4px' }}>🔒</div>
