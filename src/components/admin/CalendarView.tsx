@@ -9,7 +9,37 @@ import { toast } from 'sonner';
 
 const HOURS = Array.from({ length: 16 }, (_, i) => i + 6); // 06:00 to 21:00
 
-// ... (existing constants)
+// 1. Define Solid Colors for Borders (Accents)
+const GOAL_ACCENTS: Record<string, string> = {
+    'Pérdida de Peso / Grasa': '#22c55e',      // Green 500
+    'Pérdida de Peso': '#22c55e',
+    'Ganar Masa Muscular (Hipertrofia)': '#ef4444',      // Red 500
+    'Ganancia Muscular': '#ef4444',
+    'Resistencia': '#3b82f6',        // Blue 500 (Legacy/Simpler)
+    'Rendimiento Deportivo': '#3b82f6', // Blue 500
+    'Definición / Tonificación': '#a855f7',      // Purple 500
+    'Salud General y Bienestar': '#f59e0b',   // Amber 500
+    'Ganar Fuerza Pura': '#ec4899', // Pink 500?
+    'Rehabilitación / Prevención de Lesiones': '#14b8a6', // Teal 500
+    'Flexibilidad': '#a855f7',
+    'default': '#6b7280'           // Gray 500
+};
+
+// 2. Define Tinted Backgrounds (Low Opacity)
+const GOAL_BACKGROUNDS: Record<string, string> = {
+    'Pérdida de Peso / Grasa': 'rgba(34, 197, 94, 0.15)',
+    'Pérdida de Peso': 'rgba(34, 197, 94, 0.15)',
+    'Ganar Masa Muscular (Hipertrofia)': 'rgba(239, 68, 68, 0.15)',
+    'Ganancia Muscular': 'rgba(239, 68, 68, 0.15)',
+    'Resistencia': 'rgba(59, 130, 246, 0.15)',
+    'Rendimiento Deportivo': 'rgba(59, 130, 246, 0.15)',
+    'Definición / Tonificación': 'rgba(168, 85, 247, 0.15)',
+    'Salud General y Bienestar': 'rgba(245, 158, 11, 0.15)',
+    'Ganar Fuerza Pura': 'rgba(236, 72, 153, 0.15)',
+    'Rehabilitación / Prevención de Lesiones': 'rgba(20, 184, 166, 0.15)',
+    'Flexibilidad': 'rgba(168, 85, 247, 0.15)',
+    'default': 'rgba(107, 114, 128, 0.15)'
+};
 
 export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
     // ... (existing state)
