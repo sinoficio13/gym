@@ -106,6 +106,8 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
             .select('*, profiles(full_name, phone, email, training_goal, birth_date, avatar_url)')
             .gte('start_time', start.toISOString())
             .lte('start_time', end.toISOString())
+            .neq('status', 'cancelled')
+            .neq('status', 'cancelada') // Safety for Spanish migration
             .order('start_time', { ascending: true }); // Important for Agenda
 
         // console.log('DEBUG: Fetched apps:', appData?.length, 'Error:', appError);

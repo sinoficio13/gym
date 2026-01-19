@@ -178,7 +178,16 @@ export const TimeSlotPicker = () => {
         setBooking(false);
 
         if (error) {
-            toast.error('Error al reservar: ' + error.message);
+            // Check for unique constraint violation (Postgres code 23505)
+            if (error.code === '23505' || error.message.includes('unique') || error.message.includes('duplicate')) {
+                toast.error('Ya tienes una cita activa en este horario.');
+                // Refresh to show the reality
+                const current = selectedDate;
+                setSelectedDate(null);
+                setTimeout(() => setSelectedDate(current), 10);
+            } else {
+                toast.error('Error al reservar: ' + error.message);
+            }
         } else {
             toast.success('¡Reserva Exitosa! Nos vemos pronto.');
             // Force refresh of slots
