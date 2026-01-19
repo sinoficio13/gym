@@ -130,28 +130,68 @@ interface NavItemProps {
     icon: React.ReactNode;
     isActive: boolean;
     mobile?: boolean;
+    badge?: number;
 }
 
-const NavItem = ({ href, label, icon, isActive, mobile }: NavItemProps) => {
+const NavItem = ({ href, label, icon, isActive, mobile, badge }: NavItemProps) => {
     if (mobile) {
         return (
             <Link href={href} className={`${styles.mobileNavLink} ${isActive ? styles.mobileNavLinkActive : ''}`}>
-                <div>{icon}</div>
+                <div style={{ position: 'relative' }}>
+                    {icon}
+                    {badge && badge > 0 && (
+                        <div style={{
+                            position: 'absolute',
+                            top: -4,
+                            right: -4,
+                            background: '#ef4444',
+                            color: 'white',
+                            fontSize: '0.6rem',
+                            width: '14px',
+                            height: '14px',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            border: '2px solid var(--md-sys-color-background)'
+                        }}>
+                            {badge}
+                        </div>
+                    )}
+                </div>
                 <span>{label}</span>
             </Link>
         );
     }
     return (
-        <Link href={href} className={`${styles.navLink} ${isActive ? styles.navLinkActive : ''}`}>
-            {icon}
-            <span>{label}</span>
+        <Link href={href} className={`${styles.navLink} ${isActive ? styles.navLinkActive : ''}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                {icon}
+                <span>{label}</span>
+            </div>
+            {badge && badge > 0 && (
+                <div style={{
+                    background: '#ef4444',
+                    color: 'white',
+                    fontSize: '0.75rem',
+                    fontWeight: 'bold',
+                    padding: '0 6px',
+                    height: '18px',
+                    borderRadius: '9px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                }}>
+                    {badge}
+                </div>
+            )}
         </Link>
     );
 };
 
 interface AppShellProps {
     children: React.ReactNode;
-    navItems: { href: string; label: string; icon: React.ReactNode }[];
+    navItems: { href: string; label: string; icon: React.ReactNode; badge?: number }[];
     title?: string;
     subtitle?: string;
 }

@@ -75,15 +75,22 @@
 
 @media (max-width: 768px) {
     .grid {
-        min-width: 800px;
-        /* Force scroll for grid on mobile if used */
+        /* Force horizontal scroll */
         overflow-x: auto;
+        /* Ensure each day column is readable (min 110px) + Time column (60px) */
+        grid-template-columns: 60px repeat(7, minmax(110px, 1fr));
+        display: grid;
     }
 }
 
 .timeColumn {
     border-right: 1px solid rgba(255, 255, 255, 0.05);
-    background: rgba(0, 0, 0, 0.2);
+    background: #1e1e1e;
+    /* Solid background for sticky */
+    position: sticky;
+    left: 0;
+    z-index: 50;
+    /* Higher than appointments */
 }
 
 .timeLabel {
