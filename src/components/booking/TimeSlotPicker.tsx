@@ -17,7 +17,15 @@ export const TimeSlotPicker = () => {
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
     const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+
+    // Slots that are physically impossible to book (full or admin blocked)
     const [unavailableSlots, setUnavailableSlots] = useState<string[]>([]);
+    // Map of time -> appointmentId for the current user
+    const [myAppointments, setMyAppointments] = useState<Record<string, string>>({});
+
+    // State for custom confirmation modal
+    const [apptToCancel, setApptToCancel] = useState<string | null>(null);
+
     const [loadingSlots, setLoadingSlots] = useState(false);
     const [booking, setBooking] = useState(false);
 
@@ -62,20 +70,16 @@ export const TimeSlotPicker = () => {
 
             // Fallback default hours if DB is empty
             const baseSlots = scheduleData && scheduleData.length > 0
-                ? scheduleData.map(s => s.start_time.slice(0, 5)) // Ensure HH:MM format
-                : [];
+                ? scheduleData.map(s => s.start_time.slice(0, 5))
+                : Array.from({ length: 15 }, (_, i) => `${(i + 7).toString().padStart(2, '0')}:00`);
 
             setAvailableSlots(baseSlots);
-
-            if (baseSlots.length === 0) {
-                setLoadingSlots(false);
-                return; // No need to fetch bookings if closed
-            }
+            setSelectedTime(null); // Reset selection on date change
 
             // 2. Fetch Appointments
             const { data: aptData } = await supabase
                 .from('appointments')
-                .select('start_time, client_id')
+                .select('id, start_time, client_id')
                 .gte('start_time', startOfDay.toISOString())
                 .lte('start_time', endOfDay.toISOString())
                 .neq('status', 'cancelled');
@@ -89,15 +93,18 @@ export const TimeSlotPicker = () => {
 
             // Process Availability
             const slotCounts: Record<string, number> = {};
-            const userBookedSlots: string[] = [];
             const adminBlockedSlots: string[] = [];
+            const myApptsMap: Record<string, string> = {};
 
             if (aptData) {
                 aptData.forEach(apt => {
                     const date = new Date(apt.start_time);
                     const timeKey = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
                     slotCounts[timeKey] = (slotCounts[timeKey] || 0) + 1;
-                    if (user && apt.client_id === user.id) userBookedSlots.push(timeKey);
+
+                    if (user && apt.client_id === user.id) {
+                        myApptsMap[timeKey] = apt.id;
+                    }
                 });
             }
 
@@ -109,12 +116,14 @@ export const TimeSlotPicker = () => {
                 });
             }
 
-            // Mark Unavailable
+            setMyAppointments(myApptsMap);
+
+            // Mark Unavailable (Exclude user's own slots from 'unavailable' so they stay interactive)
             const blocked = baseSlots.filter(h => {
-                const isFull = (slotCounts[h] || 0) >= 10; // Capacity limit increased to 10 per hour
-                const isAlreadyBooked = userBookedSlots.includes(h); // Prevent double booking
-                const isAdminBlocked = adminBlockedSlots.includes(h); // Admin Block
-                return isFull || isAlreadyBooked || isAdminBlocked;
+                const isFull = (slotCounts[h] || 0) >= 10; // Capacity limit
+                // We do NOT block 'my bookings' here, we handle them in render as 'special' slots
+                const isAdminBlocked = adminBlockedSlots.includes(h);
+                return isFull || isAdminBlocked;
             });
 
             setUnavailableSlots(blocked);
@@ -136,10 +145,15 @@ export const TimeSlotPicker = () => {
         }
 
         // Check profile
-        const { data: profile } = await supabase.from('profiles').select('id, full_name').eq('id', user.id).single();
+        const { data: profile } = await supabase.from('profiles').select('id, full_name, subscription_status').eq('id', user.id).single();
         if (!profile || !profile.full_name) {
             toast.warning("Por favor completa tu perfil antes de reservar.");
             router.push('/dashboard/client/profile');
+            return;
+        }
+
+        if (profile.subscription_status !== 'activo') {
+            toast.error("Tu suscripción no está activa. Por favor renueva tu plan para agendar.");
             return;
         }
 
@@ -167,14 +181,39 @@ export const TimeSlotPicker = () => {
             toast.error('Error al reservar: ' + error.message);
         } else {
             toast.success('¡Reserva Exitosa! Nos vemos pronto.');
-            setSelectedTime(null);
-            setTimeout(() => {
-                window.location.href = '/dashboard/client';
-            }, 1500);
+            // Force refresh of slots
+            const current = selectedDate;
+            setSelectedDate(null);
+            setTimeout(() => setSelectedDate(current), 10);
         }
     };
 
-    const isTimeDisabled = (time: string) => unavailableSlots.includes(time);
+    const handleCancelClick = (appointmentId: string) => {
+        setApptToCancel(appointmentId);
+    };
+
+    const confirmCancel = async () => {
+        if (!apptToCancel) return;
+
+        setBooking(true);
+        const { error } = await supabase
+            .from('appointments')
+            .update({ status: 'cancelled' })
+            .eq('id', apptToCancel);
+
+        setBooking(false);
+        setApptToCancel(null);
+
+        if (error) {
+            toast.error('Error al cancelar: ' + error.message);
+        } else {
+            toast.success('Cita cancelada correctamente.');
+            // Refresh
+            const current = selectedDate;
+            setSelectedDate(null);
+            setTimeout(() => setSelectedDate(current), 10);
+        }
+    };
 
     return (
         <div className={styles.container}>
@@ -209,18 +248,36 @@ export const TimeSlotPicker = () => {
                     </div>
                 ) : (
                     availableSlots.map((time) => {
-                        const disabled = isTimeDisabled(time);
+                        const myBookingId = myAppointments[time];
+                        const isBlocked = unavailableSlots.includes(time);
+                        // Disable if blocked AND not mine. If mine, enable for cancel.
+                        const disabled = isBlocked && !myBookingId;
                         const isSelected = selectedTime === time;
+
                         return (
                             <button
                                 key={time}
                                 disabled={disabled}
-                                className={`${styles.timeButton} ${isSelected ? styles.selectedTime : ''} ${disabled ? styles.disabledButton : ''}`}
-                                onClick={() => !disabled && setSelectedTime(time)}
+                                className={`
+                                    ${styles.timeButton} 
+                                    ${isSelected ? styles.selectedTime : ''} 
+                                    ${disabled ? styles.disabledButton : ''}
+                                    ${myBookingId ? styles.myBooking : ''}
+                                `}
+                                onClick={() => {
+                                    if (myBookingId) {
+                                        handleCancelClick(myBookingId);
+                                    } else if (!disabled) {
+                                        setSelectedTime(time);
+                                    }
+                                }}
                             >
                                 {formatTime12h(time)}
-                                {disabled && <span style={{ display: 'block', fontSize: '0.6rem', color: '#ff6b6b' }}>
-                                    Ocupado / Reservado
+                                {myBookingId && <span style={{ display: 'block', fontSize: '0.6rem', fontWeight: 'bold' }}>
+                                    Tu Reserva
+                                </span>}
+                                {disabled && !myBookingId && <span style={{ display: 'block', fontSize: '0.6rem', color: '#ff6b6b' }}>
+                                    Ocupado
                                 </span>}
                             </button>
                         )
@@ -235,9 +292,45 @@ export const TimeSlotPicker = () => {
                     onClick={handleConfirm}
                     className={!selectedTime ? styles.disabledButton : ''}
                 >
-                    {booking ? 'Confirmando...' : (selectedTime ? 'Confirmar Reserva' : 'Selecciona una hora')}
+                    {booking ? 'Procesando...' : (selectedTime ? 'Confirmar Reserva' : 'Selecciona una hora')}
                 </PrimaryButton>
             </div>
+
+            {/* Premium Confirmation Modal */}
+            {apptToCancel && (
+                <div className={styles.modalOverlay} onClick={() => setApptToCancel(null)}>
+                    <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+                        <div className={styles.iconWrapper}>
+                            {/* Trash Icon */}
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M3 6h18" />
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            </svg>
+                        </div>
+
+                        <h3 className={styles.modalTitle}>¿Cancelar tu cita?</h3>
+                        <p className={styles.modalText}>
+                            Esta acción liberará tu espacio para que otro atleta pueda aprovecharlo. ¿Estás seguro?
+                        </p>
+
+                        <div className={styles.modalActions}>
+                            <button
+                                className={styles.cancelButton}
+                                onClick={() => setApptToCancel(null)}
+                            >
+                                No, Volver
+                            </button>
+                            <button
+                                className={styles.confirmButton}
+                                onClick={confirmCancel}
+                                disabled={booking}
+                            >
+                                {booking ? 'Procesando...' : 'Sí, Cancelar'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

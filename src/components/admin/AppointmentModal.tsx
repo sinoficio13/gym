@@ -46,7 +46,7 @@ export const AppointmentModal = ({ appointment, onClose, onUpdate }: Appointment
             // Fetch ALL appointments starting at this Exact Time
             const { data: conflicts, error: conflictError } = await supabase
                 .from('appointments')
-                .select('id, user_id, status')
+                .select('id, client_id, status')
                 .eq('start_time', newStart.toISOString())
                 .neq('status', 'cancelled'); // Don't count cancelled
 
@@ -54,17 +54,14 @@ export const AppointmentModal = ({ appointment, onClose, onUpdate }: Appointment
 
             const existingApps = conflicts || [];
 
-            // Check Capacity (Max 3)
-            // Filter out CURRENT appointment if it's already in this slot (editing same time)
+            // Check Capacity (Max 3) - REMOVED per user request
+            // const otherApps = existingApps.filter(a => a.id !== appointment.id);
+            // if (otherApps.length >= 3) { ... }
+
             const otherApps = existingApps.filter(a => a.id !== appointment.id);
-            if (otherApps.length >= 3) {
-                alert('🚫 ACUPADO: Ya hay 3 personas agendadas a esta hora. Selecciona otro horario.');
-                setLoading(false);
-                return;
-            }
 
             // Check User Duplication
-            const userAlreadyHasAppt = otherApps.some(a => a.user_id === appointment.user_id);
+            const userAlreadyHasAppt = otherApps.some(a => a.client_id === appointment.client_id);
             if (userAlreadyHasAppt) {
                 alert('⚠️ DUPLICADO: Este usuario ya tiene una cita agendada a esta hora.');
                 setLoading(false);

@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { GlassCard } from "@/components/ui/GlassCard";
 import { CalendarView } from "@/components/admin/CalendarView";
 
+import { SubscriptionsManager } from "@/components/admin/SubscriptionsManager";
+
 export default function AdminDashboard() {
     const [stats, setStats] = useState({ today: 0, week: 0, clients: 0 });
     const [loading, setLoading] = useState(true);
@@ -19,29 +21,32 @@ export default function AdminDashboard() {
 
             <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                gap: '16px',
-                marginBottom: '32px'
+                gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
+                gap: '12px',
+                marginBottom: '24px'
             }}>
-                <GlassCard style={{ textAlign: 'center', padding: '24px' }}>
-                    <h3 style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--md-sys-color-primary)' }}>
+                <GlassCard style={{ textAlign: 'center', padding: '16px' }}>
+                    <h3 style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--md-sys-color-primary)', margin: 0 }}>
                         {loading ? '...' : stats.today}
                     </h3>
-                    <p style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>Citas (En Vista)</p>
+                    <p style={{ color: 'var(--md-sys-color-on-surface-variant)', margin: '4px 0 0 0', fontSize: '0.85rem' }}>Citas (En Vista)</p>
                 </GlassCard>
-                <GlassCard style={{ textAlign: 'center', padding: '24px' }}>
-                    <h3 style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--md-sys-color-primary)' }}>
+                <GlassCard style={{ textAlign: 'center', padding: '16px' }}>
+                    <h3 style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--md-sys-color-primary)', margin: 0 }}>
                         {loading ? '...' : stats.week}
                     </h3>
-                    <p style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>Total Citas</p>
+                    <p style={{ color: 'var(--md-sys-color-on-surface-variant)', margin: '4px 0 0 0', fontSize: '0.85rem' }}>Total Citas</p>
                 </GlassCard>
-                <GlassCard style={{ textAlign: 'center', padding: '24px' }}>
-                    <h3 style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--md-sys-color-primary)' }}>
+                <GlassCard style={{ textAlign: 'center', padding: '16px' }}>
+                    <h3 style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--md-sys-color-primary)', margin: 0 }}>
                         {loading ? '...' : stats.clients}
                     </h3>
-                    <p style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>Clientes (Vistos)</p>
+                    <p style={{ color: 'var(--md-sys-color-on-surface-variant)', margin: '4px 0 0 0', fontSize: '0.85rem' }}>Clientes (Vistos)</p>
                 </GlassCard>
             </div>
+
+            {/* Subscriptions Section - Auto-hides if empty */}
+            <SubscriptionsManager />
 
             <h2 style={{ fontSize: '1.5rem', marginBottom: '16px' }}>Calendario de Citas</h2>
             <CalendarView onStatsUpdate={handleStatsUpdate} />

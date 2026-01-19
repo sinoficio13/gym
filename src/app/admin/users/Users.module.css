@@ -143,17 +143,19 @@
     text-transform: capitalize;
 }
 
-.statusBadge.active {
+.statusBadge.activo {
     background: rgba(0, 255, 0, 0.1);
     color: #4caf50;
 }
 
-.statusBadge.inactive {
+.statusBadge.inactivo,
+.statusBadge.vencido,
+.statusBadge.rechazado {
     background: rgba(255, 0, 0, 0.1);
     color: #ef5350;
 }
 
-.statusBadge.pending {
+.statusBadge.pendiente {
     background: rgba(255, 193, 7, 0.1);
     color: #ffca28;
 }

@@ -12,7 +12,7 @@ interface Profile {
     phone: string;
     role: string;
     alias: string;
-    subscription_status: 'active' | 'inactive' | 'pending';
+    subscription_status: 'activo' | 'inactivo' | 'pendiente' | 'rechazado' | 'vencido';
     subscription_plan: string;
     subscription_expiry?: string;
     avatar_url?: string;
@@ -32,7 +32,7 @@ export const UserModal = ({ user, onClose, onUpdate }: UserModalProps) => {
     const [fullName, setFullName] = useState(user.full_name || '');
     const [alias, setAlias] = useState(user.alias || '');
     const [phone, setPhone] = useState(user.phone || '');
-    const [status, setStatus] = useState(user.subscription_status || 'pending');
+    const [status, setStatus] = useState(user.subscription_status || 'pendiente');
     const [plan, setPlan] = useState(user.subscription_plan || 'Basic');
     const [expiry, setExpiry] = useState(user.subscription_expiry || '');
     const [role, setRole] = useState(user.role || 'user');
@@ -135,12 +135,18 @@ export const UserModal = ({ user, onClose, onUpdate }: UserModalProps) => {
                             <label style={{ display: 'block', fontSize: '0.8rem', color: '#aaa', marginBottom: '8px' }}>Estado Suscripción</label>
                             <select
                                 value={status}
-                                onChange={(e) => setStatus(e.target.value as any)}
+                                onChange={(e) => {
+                                    const newStatus = e.target.value as any;
+                                    setStatus(newStatus);
+                                    if (newStatus === 'pendiente' || newStatus === 'inactivo') {
+                                        setExpiry(''); // Limpiar fecha si no está activo
+                                    }
+                                }}
                                 style={inputStyle}
                             >
-                                <option value="active">🟢 Activo</option>
-                                <option value="inactive">🔴 Inactivo (Vencido)</option>
-                                <option value="pending">🟡 Pendiente de Pago</option>
+                                <option value="activo">🟢 Activo</option>
+                                <option value="inactivo">🔴 Inactivo (Vencido)</option>
+                                <option value="pendiente">🟡 Pendiente de Pago</option>
                             </select>
                         </div>
 
@@ -148,15 +154,24 @@ export const UserModal = ({ user, onClose, onUpdate }: UserModalProps) => {
                             <label style={{ display: 'block', fontSize: '0.8rem', color: '#aaa', marginBottom: '8px' }}>Plan</label>
                             <select
                                 value={plan}
-                                onChange={(e) => setPlan(e.target.value)}
+                                onChange={(e) => {
+                                    const newPlan = e.target.value;
+                                    setPlan(newPlan);
+
+                                    if (newPlan === 'semanal' || newPlan === 'mensual') {
+                                        const date = new Date();
+                                        if (newPlan === 'semanal') date.setDate(date.getDate() + 7);
+                                        if (newPlan === 'mensual') date.setMonth(date.getMonth() + 1);
+
+                                        setExpiry(date.toISOString().split('T')[0]);
+                                        setStatus('activo');
+                                    }
+                                }}
                                 style={inputStyle}
                             >
-                                <option value="Free">Gratuito / Sin Plan</option>
-                                <option value="Semanal">Semanal</option>
-                                <option value="Mensual">Mensual</option>
-                                <option value="Trimestral">Trimestral</option>
-                                <option value="Semestral">Semestral</option>
-                                <option value="Anual">Anual</option>
+                                <option value="">Sin Plan / Gratuito</option>
+                                <option value="semanal">Semanal</option>
+                                <option value="mensual">Mensual</option>
                             </select>
                         </div>
 

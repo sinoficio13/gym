@@ -27,12 +27,14 @@ export default function ClientDashboardHome() {
                 setProfile(profileRect);
 
                 // 2. Fetch Next Appointment
+                // 2. Fetch Next Appointment
                 const now = new Date().toISOString();
                 const { data: appointments } = await supabase
                     .from('appointments')
                     .select('*')
-                    .eq('user_id', user.id)
-                    .gte('start_time', now)
+                    .eq('client_id', user.id) // Corrected column name
+                    .gte('end_time', now)     // Show current or future appointments
+                    .neq('status', 'cancelled')
                     .order('start_time', { ascending: true })
                     .limit(1);
 
@@ -58,12 +60,14 @@ export default function ClientDashboardHome() {
 
     return (
         <div className={styles.container}>
+            {/* ... (Welcome Section) */}
             <div className={styles.welcomeSection}>
-                <h1 className={styles.title}>Hola, {profile?.full_name?.split(' ')[0] || 'Atleta'} 👋</h1>
+                <h1 className={styles.title}>
+                    Hola, <span className={styles.highlight}>{profile?.full_name?.split(' ')[0] || 'Atleta'}</span> <span className={styles.wave}>👋</span>
+                </h1>
                 <p className={styles.subtitle}>Aquí tienes el resumen de tu rendimiento. ¡Vamos a por más!</p>
             </div>
 
-            {/* Quick Actions Grid */}
             <div className={styles.grid}>
 
                 {/* Status Card - Next Appointment */}
@@ -79,6 +83,29 @@ export default function ClientDashboardHome() {
                                     <div style={{ fontSize: '1.2rem', color: '#d0bcff', marginTop: '4px' }}>
                                         {formatTime(nextAppointment.start_time)}
                                     </div>
+                                    <div style={{ fontSize: '0.9rem', color: '#aaa', marginTop: '4px', textTransform: 'capitalize' }}>
+                                        {nextAppointment.status === 'confirmed' ? 'Confirmada' : 'Pendiente'}
+                                    </div>
+                                    <button
+                                        onClick={async () => {
+                                            if (!confirm('¿Seguro que quieres cancelar esta cita?')) return;
+                                            const supabase = createClient();
+                                            await supabase.from('appointments').update({ status: 'cancelled' }).eq('id', nextAppointment.id);
+                                            window.location.reload();
+                                        }}
+                                        style={{
+                                            marginTop: '12px',
+                                            background: 'rgba(239, 68, 68, 0.2)',
+                                            color: '#ef4444',
+                                            border: '1px solid rgba(239, 68, 68, 0.3)',
+                                            padding: '4px 12px',
+                                            borderRadius: '8px',
+                                            fontSize: '0.8rem',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        Cancelar Cita
+                                    </button>
                                 </div>
                             ) : (
                                 <p className={styles.emptyStateText}>No tienes citas programadas.</p>
@@ -86,18 +113,19 @@ export default function ClientDashboardHome() {
                         </div>
                         <Link href="/dashboard/client/booking">
                             <PrimaryButton fullWidth>
-                                {nextAppointment ? 'Gestionar Citas' : 'Agendar Ahora'}
+                                {nextAppointment ? 'Reagendar / Nueva Cita' : 'Agendar Ahora'}
                             </PrimaryButton>
                         </Link>
                     </GlassCard>
                 </div>
 
-                {/* Progress Summary Card */}
+                {/* ... (Progress Card) ... */}
                 <div className={styles.cardContainer}>
                     <GlassCard>
                         <div className={styles.cardTitle}>
                             <h3>Mi Progreso</h3>
-                            <span className={styles.statusBadge}>Activo</span>
+                            {/* Assuming we might want to show active status here or just keep it simple */}
+                            {profile?.subscription_status === 'activo' && <span className={styles.statusBadge}>Activo</span>}
                         </div>
 
                         <div className={styles.statsRow}>
@@ -122,7 +150,7 @@ export default function ClientDashboardHome() {
                 <div className={styles.cardContainer}>
                     <GlassCard
                         style={{
-                            borderLeft: profile?.subscription_status === 'active'
+                            borderLeft: profile?.subscription_status === 'activo'
                                 ? '4px solid #22c55e'
                                 : '4px solid #ef4444'
                         }}
@@ -130,7 +158,7 @@ export default function ClientDashboardHome() {
                         <h3 className={styles.cardTitle}>Plan Actual</h3>
                         <div style={{
                             padding: '1rem',
-                            background: profile?.subscription_status === 'active'
+                            background: profile?.subscription_status === 'activo'
                                 ? 'rgba(34, 197, 94, 0.1)'
                                 : 'rgba(239, 68, 68, 0.1)',
                             borderRadius: '12px',
@@ -138,19 +166,19 @@ export default function ClientDashboardHome() {
                             border: '1px solid rgba(255,255,255,0.05)'
                         }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <p style={{ color: 'white', fontWeight: 'bold', fontSize: '1.2rem' }}>
+                                <p style={{ color: 'white', fontWeight: 'bold', fontSize: '1.2rem', textTransform: 'capitalize' }}>
                                     {profile?.subscription_plan === 'Free' ? 'Sin Plan' : profile?.subscription_plan}
                                 </p>
-                                {profile?.subscription_status === 'active' ? (
+                                {profile?.subscription_status === 'activo' ? (
                                     <span style={{ fontSize: '0.8rem', padding: '2px 8px', borderRadius: '12px', background: '#22c55e', color: 'black', fontWeight: 'bold' }}>Activo</span>
                                 ) : (
                                     <span style={{ fontSize: '0.8rem', padding: '2px 8px', borderRadius: '12px', background: '#ef4444', color: 'white', fontWeight: 'bold' }}>
-                                        {profile?.subscription_status === 'pending' ? 'Pago Pendiente' : 'Vencido'}
+                                        {profile?.subscription_status === 'pendiente' ? 'Pago Pendiente' : 'Vencido'}
                                     </span>
                                 )}
                             </div>
 
-                            {profile?.subscription_status !== 'active' && (
+                            {profile?.subscription_status !== 'activo' && (
                                 <p style={{ fontSize: '0.9rem', color: '#ffaaaa', marginTop: '10px', lineHeight: '1.4' }}>
                                     ⚠️ Tu suscripción requiere atención. Por favor contacta al administrador para regularizar tu pago.
                                 </p>

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import styles from './CalendarView.module.css';
 import { createClient } from '@/lib/supabase/client';
 import { AppointmentModal } from './AppointmentModal';
+import { CalendarClusterModal } from './CalendarClusterModal';
 
 import { toast } from 'sonner';
 
@@ -48,20 +49,27 @@ interface CalendarViewProps {
 export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
     // ... (existing state)
     const [currentDate, setCurrentDate] = useState(new Date());
-    const [view, setView] = useState<'week' | 'day' | 'agenda'>('agenda'); // Default to agenda for Mobile
+    const [view, setView] = useState<'week' | 'day' | 'agenda'>('agenda');
     const [appointments, setAppointments] = useState<any[]>([]);
     const [blockedSlots, setBlockedSlots] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
+    const [selectedCluster, setSelectedCluster] = useState<{ appointments: any[], startTime: Date } | null>(null);
+    const [mounted, setMounted] = useState(false);
+    const fetchIdRef = React.useRef(0); // Race condition protection
 
     useEffect(() => {
-        // Auto-detect mobile and set agenda view
-        if (window.innerWidth < 768) {
-            setView('agenda');
-        } else {
+        setMounted(true);
+        // Auto-detect mobile and set agenda view ONLY on client
+        if (window.innerWidth >= 768) {
             setView('week');
         }
     }, []);
+
+    // Prevent hydration mismatch: Hook rule compliance - this must be AFTER all hooks (useEffect, useMemo)
+    // blockedSlotsSet is a useMemo, so we must return after it.
+
+    // ... (rest of hooks)
 
     const getRange = (date: Date) => {
         const start = new Date(date);
@@ -85,8 +93,12 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
     };
 
     const loadAppointments = async () => {
+        const requestId = ++fetchIdRef.current; // Increment ID for this request
+        // console.log(`DEBUG: Starting Request #${requestId}`);
+        // console.log('DEBUG: loadAppointments called');
         const supabase = createClient();
         const { start, end } = getRange(currentDate);
+        // console.log(`DEBUG: Range: ${start.toISOString()} to ${end.toISOString()}`);
 
         // Fetch Appointments
         const { data: appData, error: appError } = await supabase
@@ -96,12 +108,20 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
             .lte('start_time', end.toISOString())
             .order('start_time', { ascending: true }); // Important for Agenda
 
+        // console.log('DEBUG: Fetched apps:', appData?.length, 'Error:', appError);
+
         // Fetch Blocked Slots
         const { data: blockData, error: blockError } = await supabase
             .from('blocked_slots')
             .select('*')
             .gte('start_time', start.toISOString())
             .lte('start_time', end.toISOString());
+
+        // Check if this is still the latest request
+        if (requestId !== fetchIdRef.current) {
+            // console.log(`DEBUG: Ignoring stale request #${requestId} (Current: ${fetchIdRef.current})`);
+            return;
+        }
 
         if (appData) {
             setAppointments(appData);
@@ -119,6 +139,7 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
                 });
             }
         } else {
+            console.warn('DEBUG: No data returned or error', appError);
             setAppointments([]);
             if (appError) {
                 console.error('Error fetching appointments:', appError);
@@ -186,6 +207,8 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
         });
         return set;
     }, [blockedSlots]);
+
+    if (!mounted) return null;
 
     // ... (navigate function)
     const navigate = (offset: number) => {
@@ -292,76 +315,68 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
     }
 
     // Helper to detect overlaps and assign visual slots
+    // Returns a mixed list of Single Appointments and Clusters
     const organizeAppointments = (dailyAppointments: any[]) => {
-        // 1. Sort by start time, then duration (longer first)
+        if (!dailyAppointments.length) return [];
+
+        // 1. Sort by start time
         const sorted = [...dailyAppointments].sort((a, b) => {
-            const startA = new Date(a.start_time).getTime();
-            const startB = new Date(b.start_time).getTime();
-            if (startA !== startB) return startA - startB;
-            // secondary sort by end time (duration)
-            const endA = new Date(a.end_time).getTime();
-            const endB = new Date(b.end_time).getTime();
-            return endB - endA;
+            return new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
         });
 
-        const arranged: any[] = [];
-        const columns: any[][] = []; // List of columns, each containing appointments
+        // 2. Identify High Density Groups
+        // Group by Hourly Slots (using simple string key YYYY-MM-DD-HH)
+        const hourlyGroups: Record<string, any[]> = {};
 
         sorted.forEach(apt => {
-            const start = new Date(apt.start_time).getTime();
-            const end = new Date(apt.end_time).getTime();
-
-            // Find first column where this appointment fits without overlapping
-            let placed = false;
-            for (let i = 0; i < columns.length; i++) {
-                const col = columns[i];
-                // Check against last appointment in this column
-                // (Since we sorted by start time, we only need to check the last added one in the column if we just want simple packing,
-                // but for true visual overlap handling within a time block, we should check against ALL in column or just strict time end)
-                // Simplify: Check if the last item in this column ends before current starts.
-                const lastInCol = col[col.length - 1];
-                const lastEnd = new Date(lastInCol.end_time).getTime();
-
-                if (lastEnd <= start) {
-                    col.push(apt);
-                    apt.colIndex = i;
-                    placed = true;
-                    break;
-                }
-            }
-
-            if (!placed) {
-                // Create new column
-                columns.push([apt]);
-                apt.colIndex = columns.length - 1;
-            }
-            arranged.push(apt);
+            const d = new Date(apt.start_time);
+            // Normalize to hour to ensure grouping works even if seconds differ
+            // Use local time components provided by browser since grid handles local time
+            const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}-${d.getHours()}`;
+            if (!hourlyGroups[key]) hourlyGroups[key] = [];
+            hourlyGroups[key].push(apt);
         });
 
-        // This simple greedy 'packing' puts things in columns but doesn't necessarily expand them to full width.
-        // For a Google Calendar style, we want grouped blocks to share width.
-        // A simpler approach for this specific request (aesthetic sharing):
-        // Detect groups of colliding events given the sorted list.
+        // Flatten back to a list
+        const layoutItems: any[] = [];
+        const CLUSTER_THRESHOLD = 3; // Re-enabled clustering
 
-        return sorted.map(apt => {
-            // Basic collision detection against all others to find 'max concurrent'
-            // This is an O(N^2) approach but N is small (appointments per day)
-            const start = new Date(apt.start_time).getTime();
-            const end = new Date(apt.end_time).getTime();
+        Object.values(hourlyGroups).forEach((group: any[]) => {
+            if (group.length > CLUSTER_THRESHOLD) {
+                const first = group[0];
+                // Use the common start time of the group (or the hour start)
+                layoutItems.push({
+                    id: `cluster-${first.id}`,
+                    type: 'cluster',
+                    start_time: first.start_time,
+                    end_time: group[0].end_time, // Visual height based on first item duration (usually 1h)
+                    appointments: group,
+                    count: group.length // Number of items in this cluster
+                });
+            } else {
+                group.forEach(apt => {
+                    layoutItems.push({ ...apt, type: 'appointment' });
+                });
+            }
+        });
 
-            // Find all concurrent events
-            const concurrent = sorted.filter(other => {
+        // 3. Compute Layout
+        return layoutItems.map(item => {
+            const start = new Date(item.start_time).getTime();
+            const end = new Date(item.end_time).getTime();
+
+            // Find concurrent
+            const concurrent = layoutItems.filter(other => {
                 const oStart = new Date(other.start_time).getTime();
                 const oEnd = new Date(other.end_time).getTime();
                 return (start < oEnd && end > oStart);
             });
 
             const count = concurrent.length;
-            // Find index of self in concurrent list (sorted by start time)
-            const index = concurrent.indexOf(apt);
+            const index = concurrent.indexOf(item);
 
             return {
-                ...apt,
+                ...item,
                 _width: 100 / count,
                 _left: (100 / count) * index
             };
@@ -498,13 +513,78 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
                                     })}
 
                                     {/* Appointments with Layout Logic */}
-                                    {arrangedAppointments.map((apt: any) => {
+                                    {arrangedAppointments.map((item: any) => {
+                                        // CLUSTER RENDERING
+                                        if (item.type === 'cluster') {
+                                            const style = getAppointmentStyle(item.start_time, item.end_time, item._width || 100, item._left || 0);
+                                            return (
+                                                <div
+                                                    key={item.id}
+                                                    className="cluster-card"
+                                                    style={{
+                                                        ...style,
+                                                        position: 'absolute',
+                                                        background: 'var(--md-sys-color-primary-container, linear-gradient(135deg, #4f46e5, #7c3aed))',
+                                                        color: 'white',
+                                                        borderRadius: '8px',
+                                                        padding: '2px', // Minimal padding
+                                                        zIndex: 25,
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        justifyContent: 'center',
+                                                        alignItems: 'center',
+                                                        gap: '0px',
+                                                        overflow: 'hidden',
+                                                        boxShadow: '0 4px 6px rgba(0,0,0,0.2)',
+                                                        border: '1px solid rgba(255,255,255,0.3)',
+                                                        cursor: 'pointer',
+                                                        textAlign: 'center',
+                                                        transition: 'transform 0.1s, box-shadow 0.1s'
+                                                    }}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setSelectedCluster({ appointments: item.appointments, startTime: new Date(item.start_time) });
+                                                    }}
+                                                    onMouseEnter={e => {
+                                                        e.currentTarget.style.transform = 'scale(1.02)';
+                                                        e.currentTarget.style.boxShadow = '0 8px 15px rgba(0,0,0,0.3)';
+                                                        e.currentTarget.style.zIndex = '30';
+                                                    }}
+                                                    onMouseLeave={e => {
+                                                        e.currentTarget.style.transform = 'scale(1)';
+                                                        e.currentTarget.style.boxShadow = '0 4px 6px rgba(0,0,0,0.2)';
+                                                        e.currentTarget.style.zIndex = '25';
+                                                    }}
+                                                >
+                                                    <div style={{ fontSize: '1rem', lineHeight: '1' }}>👥</div>
+                                                    <div style={{
+                                                        fontWeight: '700',
+                                                        fontSize: '0.85rem',
+                                                        color: '#fff',
+                                                        textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+                                                    }}>
+                                                        {item.count} Clientes
+                                                    </div>
+                                                    <div style={{
+                                                        fontSize: '0.65rem',
+                                                        color: 'rgba(255,255,255,0.9)',
+                                                        marginTop: '2px',
+                                                        textTransform: 'uppercase',
+                                                        letterSpacing: '0.5px'
+                                                    }}>
+                                                        Ver grupo
+                                                    </div>
+                                                </div>
+                                            );
+                                        }
+
+                                        // INDIVIDUAL APPOINTMENT RENDERING
+                                        const apt = item;
                                         const rawGoal = apt.profiles?.training_goal;
                                         const goalKey = getGoalKey(rawGoal);
                                         const accentColor = GOAL_ACCENTS[goalKey] || GOAL_ACCENTS['default'];
                                         const bgColor = GOAL_BACKGROUNDS[goalKey] || GOAL_BACKGROUNDS['default'];
 
-                                        // Use the calculated _width and _left
                                         const style = getAppointmentStyle(apt.start_time, apt.end_time, apt._width || 100, apt._left || 0);
 
                                         return (
@@ -514,19 +594,19 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
                                                 style={{
                                                     ...style,
                                                     background: bgColor,
-                                                    borderLeft: `3px solid ${accentColor}`, /* Thinner border for small widths */
+                                                    borderLeft: `3px solid ${accentColor}`,
                                                     borderRadius: '3px',
-                                                    padding: '2px 4px', /* Smaller padding */
+                                                    padding: '2px 4px',
                                                     zIndex: 10,
                                                     display: 'flex',
                                                     flexDirection: 'column',
                                                     justifyContent: 'flex-start',
                                                     gap: '1px',
                                                     overflow: 'hidden',
-                                                    fontSize: '0.75rem' /* Base font size */
+                                                    fontSize: '0.75rem'
                                                 }}
                                                 onClick={(e) => { e.stopPropagation(); setSelectedAppointment(apt); }}
-                                                title={`${apt.profiles?.full_name} - ${apt.profiles?.training_goal}`} // Tooltip for small items
+                                                title={`${apt.profiles?.full_name} - ${apt.profiles?.training_goal}`}
                                             >
                                                 <div style={{ fontWeight: '700', fontSize: '0.7em', color: '#fff', lineHeight: '1.1' }}>
                                                     {new Date(apt.start_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
@@ -536,8 +616,7 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
                                                 </div>
                                             </div>
                                         );
-                                    })
-                                    }
+                                    })}
                                 </div>
                             </div>
                         );
@@ -550,6 +629,18 @@ export const CalendarView = ({ onStatsUpdate }: CalendarViewProps) => {
                     appointment={selectedAppointment}
                     onClose={() => setSelectedAppointment(null)}
                     onUpdate={() => { loadAppointments(); setSelectedAppointment(null); }}
+                />
+            )}
+
+            {selectedCluster && (
+                <CalendarClusterModal
+                    appointments={selectedCluster.appointments}
+                    startTime={selectedCluster.startTime}
+                    onClose={() => setSelectedCluster(null)}
+                    onSelectAppointment={(apt) => {
+                        setSelectedCluster(null);
+                        setSelectedAppointment(apt);
+                    }}
                 />
             )}
         </div>

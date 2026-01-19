@@ -14,7 +14,7 @@ interface Profile {
     phone: string;
     role: string;
     alias: string;
-    subscription_status: 'active' | 'inactive' | 'pending';
+    subscription_status: 'activo' | 'inactivo' | 'pendiente' | 'rechazado' | 'vencido';
     subscription_plan: string;
     avatar_url?: string;
     created_at?: string;
@@ -111,12 +111,13 @@ export default function AdminUsersPage() {
                                             </div>
                                         </td>
                                         <td>
-                                            <span className={styles.planBadge}>{user.subscription_plan || 'N/A'}</span>
+                                            <span className={styles.planBadge}>
+                                                {user.subscription_plan ? user.subscription_plan : 'Sin Plan'}
+                                            </span>
                                         </td>
                                         <td>
                                             <span className={`${styles.statusBadge} ${styles[user.subscription_status]}`}>
-                                                {user.subscription_status === 'active' ? 'Activo' :
-                                                    user.subscription_status === 'inactive' ? 'Inactivo' : 'Pendiente'}
+                                                {user.subscription_status === 'pendiente' ? 'Pendiente de Pago' : user.subscription_status || 'Desconocido'}
                                             </span>
                                         </td>
                                         <td>

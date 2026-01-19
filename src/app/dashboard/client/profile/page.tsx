@@ -6,6 +6,7 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { SubscriptionCard } from '@/components/profile/SubscriptionCard';
 
 export default function ProfilePage() {
     const supabase = createClient();
@@ -18,7 +19,6 @@ export default function ProfilePage() {
     // Form states
     const [fullName, setFullName] = useState('');
     const [phone, setPhone] = useState('');
-    // const [alias, setAlias] = useState(''); // Removed alias
     const [birthDate, setBirthDate] = useState('');
     const [trainingGoal, setTrainingGoal] = useState('');
     const [notes, setNotes] = useState('');
@@ -52,7 +52,6 @@ export default function ProfilePage() {
                 setProfile(data);
                 setFullName(data.full_name || '');
                 setPhone(data.phone || '');
-                // setAlias(data.alias || '');
                 setBirthDate(data.birth_date || '');
                 setTrainingGoal(data.training_goal || '');
                 setNotes(data.notes || '');
@@ -70,15 +69,12 @@ export default function ProfilePage() {
             .update({
                 full_name: fullName,
                 phone: phone,
-                // alias: alias,
                 birth_date: birthDate,
                 training_goal: trainingGoal,
                 notes: notes,
                 updated_at: new Date().toISOString(),
             })
             .eq('id', profile.id);
-
-        // ... (in handleUpdate)
 
         if (error) {
             toast.error('Error al actualizar: ' + error.message);
@@ -91,6 +87,11 @@ export default function ProfilePage() {
     const handleLogout = async () => {
         await supabase.auth.signOut();
         window.location.href = '/';
+    };
+
+    const handleProfileUpdate = () => {
+        // Force reload to get fresh subscription status
+        window.location.reload();
     };
 
     if (loading) {
@@ -141,9 +142,24 @@ export default function ProfilePage() {
                         )}
                         <div>
                             <h3 style={{ color: 'white', margin: 0 }}>{userMetadata?.email}</h3>
-                            <p style={{ color: '#aaa', fontSize: '0.9rem', margin: '4px 0 0 0' }}>Cliente Premium Plan</p>
+                            <p style={{ color: '#aaa', fontSize: '0.9rem', margin: '4px 0 0 0' }}>
+                                {profile?.subscription_status === 'active'
+                                    ? 'Miembro Activo'
+                                    : 'Miembro General'}
+                            </p>
                         </div>
                     </div>
+
+                    {/* Subscription Card Integration */}
+                    {profile && (
+                        <SubscriptionCard
+                            profileId={profile.id}
+                            subscriptionStatus={profile.subscription_status || 'inactive'}
+                            subscriptionPlan={profile.subscription_plan}
+                            subscriptionExpiry={profile.subscription_expiry}
+                            onUpdate={handleProfileUpdate}
+                        />
+                    )}
 
                     {/* Formulario */}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
