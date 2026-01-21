@@ -6,10 +6,12 @@ import { ServicesSection } from "@/components/landing/ServicesSection";
 import { TrajectorySection } from "@/components/landing/TrajectorySection";
 import { PhilosophySection } from "@/components/landing/PhilosophySection";
 import { ContactSection } from "@/components/landing/ContactSection";
+import { FloatingActions } from "@/components/ui/FloatingActions";
 
 export default function Home() {
   return (
     <main style={{ backgroundColor: '#000', minHeight: '100vh', width: '100%', overflowX: 'hidden' }}>
+      <FloatingActions />
       <Suspense fallback={<div style={{ height: '100vh', background: '#000' }} />}>
         <HeroSection />
       </Suspense>
