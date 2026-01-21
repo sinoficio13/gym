@@ -12,7 +12,7 @@ export const AboutSection = () => {
                 <RevealWrapper direction="right">
                     <div className={styles.imageContainer}>
                         <img
-                            src="/assets/trainer_portrait.png"
+                            src="/assets/hero-portrait-final.png"
                             alt="Euscaris Pereira"
                             className={styles.profileImage}
                         />
