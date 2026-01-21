@@ -199,7 +199,7 @@ interface AppShellProps {
 export const AppShell = ({
     children,
     navItems,
-    title = 'Eucaris Pereira',
+    title = 'Euscaris Pereira',
     subtitle = 'Portal de Cliente'
 }: AppShellProps) => {
     const pathname = usePathname();

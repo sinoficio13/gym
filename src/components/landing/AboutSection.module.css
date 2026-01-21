@@ -100,6 +100,7 @@
 }
 
 /* Mobile Responsive Styles */
+/* Mobile Responsive Styles */
 @media (max-width: 768px) {
     .section {
         padding: 60px 20px;
@@ -107,20 +108,28 @@
 
     .container {
         grid-template-columns: 1fr;
-        gap: 48px;
+        gap: 32px;
+        /* Reduced gap */
     }
 
     .imageContainer {
         max-width: 100%;
         margin-bottom: 24px;
+        order: -1;
+        /* Ensure image is on top if using grid, or just logically first */
     }
 
     .title {
-        font-size: 2.5rem;
+        font-size: 2.2rem;
     }
 
     .statsContainer {
-        gap: 32px;
+        gap: 24px;
         justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .statNumber {
+        font-size: 2rem;
     }
 }

@@ -19,15 +19,15 @@ const inter = Inter({
 export const metadata: Metadata = {
   metadataBase: new URL('https://gym-beta-pink.vercel.app'),
   title: {
-    default: "Eucaris Pereira | Entrenadora Personal",
-    template: "%s | Eucaris Pereira"
+    default: "Euscaris Pereira | Entrenadora Personal",
+    template: "%s | Euscaris Pereira"
   },
-  description: "Agenda tu cita de entrenamiento con Eucaris Pereira. Planes personalizados de fitness y transformación corporal.",
+  description: "Agenda tu cita de entrenamiento con Euscaris Pereira. Planes personalizados de fitness y transformación corporal.",
   openGraph: {
-    title: "Eucaris Pereira | Entrenadora Personal",
+    title: "Euscaris Pereira | Entrenadora Personal",
     description: "Agenda tu cita de entrenamiento y transforma tu cuerpo con planes personalizados.",
     url: '/',
-    siteName: 'Eucaris Pereira',
+    siteName: 'Euscaris Pereira',
     locale: 'es_ES',
     type: 'website',
     images: [
@@ -35,13 +35,13 @@ export const metadata: Metadata = {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'Eucaris Pereira - Entrenadora Personal',
+        alt: 'Euscaris Pereira - Entrenadora Personal',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: "Eucaris Pereira | Entrenadora Personal",
+    title: "Euscaris Pereira | Entrenadora Personal",
     description: "Agenda tu cita de entrenamiento personal.",
     images: ['/og-image.png'],
   },
@@ -57,7 +57,7 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${outfit.variable} ${inter.variable}`}>
       <body suppressHydrationWarning={true}>
-        <main className="min-h-screen flex flex-col items-center justify-center p-4">
+        <main className="min-h-screen">
           {children}
         </main>
         <Toaster position="top-center" />

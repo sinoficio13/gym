@@ -46,7 +46,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     return (
         <AppShell
             navItems={navItems}
-            title="Eucaris Pereira"
+            title="Euscaris Pereira"
             subtitle="Portal de Cliente"
         >
             {children}

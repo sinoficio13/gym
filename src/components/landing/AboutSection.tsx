@@ -2,17 +2,18 @@
 
 import styles from './AboutSection.module.css';
 import { RevealWrapper } from "../ui/RevealWrapper";
+import { CountUp } from "../ui/CountUp";
 
 export const AboutSection = () => {
     return (
-        <section className={styles.section}>
+        <section id="about" className={styles.section}>
             <div className={styles.container}>
                 {/* Image Placeholder */}
                 <RevealWrapper direction="right">
                     <div className={styles.imageContainer}>
                         <img
                             src="/assets/trainer_portrait.png"
-                            alt="Eucaris Pereira"
+                            alt="Euscaris Pereira"
                             className={styles.profileImage}
                         />
 
@@ -24,7 +25,7 @@ export const AboutSection = () => {
                 {/* Content */}
                 <div>
                     <RevealWrapper delay={0.2}>
-                        <span className={styles.preTitle}>Soy Eucaris Pereira</span>
+                        <span className={styles.preTitle}>Soy Euscaris Pereira</span>
                     </RevealWrapper>
 
                     <RevealWrapper delay={0.4}>
@@ -52,11 +53,15 @@ export const AboutSection = () => {
                     <RevealWrapper delay={1.0}>
                         <div className={styles.statsContainer}>
                             <div>
-                                <h4 className={styles.statNumber}>+500</h4>
+                                <h4 className={styles.statNumber}>
+                                    +<CountUp end={500} duration={2000} />
+                                </h4>
                                 <span className={styles.statLabel}>Vidas Cambiadas</span>
                             </div>
                             <div>
-                                <h4 className={styles.statNumber}>100%</h4>
+                                <h4 className={styles.statNumber}>
+                                    <CountUp end={100} duration={2000} />%
+                                </h4>
                                 <span className={styles.statLabel}>Compromiso</span>
                             </div>
                         </div>

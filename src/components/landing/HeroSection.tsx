@@ -5,12 +5,11 @@ import styles from './HeroSection.module.css';
 import Link from "next/link";
 import { RevealWrapper } from "../ui/RevealWrapper";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export const HeroSection = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
-
     // AUTO-FIX: If Supabase redirects to home with ?code=..., forward to callback
     useEffect(() => {
         const code = searchParams.get("code");
@@ -22,7 +21,7 @@ export const HeroSection = () => {
     }, [searchParams, router]);
 
     return (
-        <section className={styles.heroContainer}>
+        <section id="hero" className={styles.heroContainer}>
             {/* Background elements */}
             <img
                 src="/assets/hero-bg.png?v=new2"
@@ -32,15 +31,24 @@ export const HeroSection = () => {
             <div className={styles.overlay}></div>
 
             {/* Content */}
+            {/* Content */}
             <div className={styles.content}>
-                <RevealWrapper delay={0.2} direction="down">
-                    <span className={styles.preTitle}>Eucaris Pereira</span>
-                </RevealWrapper>
 
-                <RevealWrapper delay={0.4}>
-                    <h1 className={styles.title}>
-                        ESCULPE TU LEGADO
-                    </h1>
+                {/* Identity Header */}
+                <RevealWrapper delay={0.2} direction="down">
+                    <div className={styles.identityHeader}>
+                        <h1 className={styles.nameTitle}>
+                            EUSCARIS<br />PEREIRA
+                        </h1>
+
+                        <div className={styles.credentialsContainer}>
+                            <span className={styles.credentialTag}>Lic. Entrenamiento Deportivo</span>
+                            <span className={styles.credentialTag}>ISAK Nivel 1</span>
+                            <div className={styles.badge}>
+                                Campeona Nacional Sumo & Judo
+                            </div>
+                        </div>
+                    </div>
                 </RevealWrapper>
 
                 <RevealWrapper delay={0.6}>
@@ -52,9 +60,9 @@ export const HeroSection = () => {
 
                 <RevealWrapper delay={0.8}>
                     <div className={styles.buttonGroup}>
-                        <Link href="/dashboard/client">
+                        <Link href="/dashboard/client" style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
                             {/* @ts-ignore */}
-                            <PrimaryButton style={{ padding: '16px 32px', fontSize: '1.1rem' }}>
+                            <PrimaryButton style={{ padding: '16px 32px', fontSize: '1.1rem', width: '100%', maxWidth: '300px' }}>
                                 Empezar Ahora
                             </PrimaryButton>
                         </Link>
@@ -70,7 +78,9 @@ export const HeroSection = () => {
                                 cursor: 'pointer',
                                 fontSize: '1.1rem',
                                 backdropFilter: 'blur(10px)',
-                                transition: 'all 0.3s ease'
+                                transition: 'all 0.3s ease',
+                                width: '100%',
+                                maxWidth: '300px'
                             }}
                         >
                             Ver Programas

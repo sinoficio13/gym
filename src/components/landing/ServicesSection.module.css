@@ -37,10 +37,15 @@
 }
 
 @media (max-width: 768px) {
+    .section {
+        padding: 60px 16px;
+        /* Reduced from default */
+    }
+
     .grid {
         grid-template-columns: 1fr;
         /* Force single column on mobile */
-        padding: 0 16px;
+        padding: 0;
     }
 }
 

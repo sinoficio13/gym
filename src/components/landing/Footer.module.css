@@ -1,0 +1,202 @@
+.footer {
+    padding: 80px 24px 40px;
+    background: #050505;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 0.95rem;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.2fr 2fr;
+    /* Brand takes less than links grid */
+    gap: 80px;
+    margin-bottom: 80px;
+}
+
+/* Brand Column */
+.brandColumn {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.brandTitle {
+    font-size: 1.5rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, white 0%, #a0a0a0 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.brandTagline {
+    color: rgba(255, 255, 255, 0.6);
+    line-height: 1.6;
+    max-width: 300px;
+}
+
+.socialRow {
+    display: flex;
+    gap: 16px;
+}
+
+.socialIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.socialIcon:hover {
+    background: white;
+    color: black;
+    transform: translateY(-2px);
+}
+
+/* Links Grid */
+.linksGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+}
+
+.columnTitle {
+    font-size: 1rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 24px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.linkList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.link {
+    color: rgba(255, 255, 255, 0.5);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: inline-block;
+    position: relative;
+}
+
+.link:hover {
+    color: white;
+    transform: translateX(5px);
+    /* Smooth slide effect */
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+.link::before {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0%;
+    height: 1px;
+    background: var(--md-sys-color-primary);
+    transition: width 0.3s ease;
+}
+
+.link:hover::before {
+    width: 100%;
+}
+
+.contactItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    transition: color 0.3s ease;
+}
+
+.contactItem:hover {
+    color: white;
+}
+
+.contactIcon {
+    opacity: 0.7;
+}
+
+.ctaButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ctaButton:hover {
+    background: white;
+    color: black;
+}
+
+/* Bottom Bar */
+.bottomBar {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-top: 32px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.signature {
+    font-family: monospace;
+    opacity: 0.5;
+}
+
+/* Mobile */
+@media (max-width: 900px) {
+    .container {
+        grid-template-columns: 1fr;
+        gap: 60px;
+    }
+
+    .linksGrid {
+        grid-template-columns: 1fr 1fr;
+        /* 2 cols on mobile usually works better than 1 */
+        gap: 40px 20px;
+    }
+
+    .bottomBar {
+        flex-direction: column;
+        gap: 16px;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .linksGrid {
+        grid-template-columns: 1fr;
+        /* Stack on very small screens */
+    }
+}
