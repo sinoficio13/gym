@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
     return {
-        name: 'Euscaris Pereira | Entrenadora',
+        name: 'Euscaris Pereira',
         short_name: 'Euscaris',
         description: 'Entrenamiento personal de alto rendimiento y transformación física.',
         start_url: '/',
