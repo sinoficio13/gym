@@ -45,6 +45,15 @@ export const metadata: Metadata = {
     description: "Agenda tu cita de entrenamiento personal.",
     images: ['/og-image.png'],
   },
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+    apple: '/apple-icon.png',
+    other: {
+      rel: 'apple-touch-icon-precomposed',
+      url: '/apple-icon.png',
+    },
+  },
 };
 
 import { Toaster } from "@/components/ui/Toaster";
